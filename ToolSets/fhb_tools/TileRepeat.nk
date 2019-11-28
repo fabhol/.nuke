@@ -1,0 +1,44 @@
+set cut_paste_input [stack 0]
+version 7.0 v8
+push $cut_paste_input
+Group {
+ name TileRepeat
+ selected true
+ xpos -480
+ ypos -129
+ addUserKnob {20 User}
+ addUserKnob {41 rows T Tile1.rows}
+ addUserKnob {41 mirrorRows l mirror -STARTLINE T Tile1.mirrorRows}
+ addUserKnob {41 columns T Tile1.columns}
+ addUserKnob {41 mirrorCols l mirror -STARTLINE T Tile1.mirrorCols}
+ addUserKnob {20 Info}
+ addUserKnob {26 Info_1 l "" +STARTLINE T "TileRepeat\nLast change: 03-04-2015\n\nFabian Holtz\nholtzf@gmail.com"}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos -260
+  ypos -154
+ }
+ Reformat {
+  type scale
+  scale {{parent.Tile1.columns} {parent.Tile1.rows}}
+  resize distort
+  filter Impulse
+  name Reformat1
+  xpos -260
+  ypos -82
+ }
+ Tile {
+  filter Impulse
+  name Tile1
+  selected true
+  xpos -260
+  ypos -34
+ }
+ Output {
+  name Output1
+  xpos -260
+  ypos 38
+ }
+end_group

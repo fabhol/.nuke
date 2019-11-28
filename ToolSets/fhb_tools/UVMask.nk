@@ -1,0 +1,98 @@
+set cut_paste_input [stack 0]
+version 7.0 v9
+push $cut_paste_input
+Group {
+name UVMask
+help "Creates a simple mask around the picked UV values.\nChoose between circular and rectangluar shape."
+selected true
+xpos 3150
+ypos 3471
+addUserKnob {20 User}
+addUserKnob {41 in l "UV channel" T channel.in}
+addUserKnob {41 color T ColorPicker.color}
+addUserKnob {26 ""}
+addUserKnob {41 which l shape T shape.which}
+addUserKnob {14 size R 0 100}
+size 1
+addUserKnob {7 rotation R -180 180}
+addUserKnob {7 coresize}
+addUserKnob {7 gamma R 0 5}
+gamma 1
+addUserKnob {20 Info}
+addUserKnob {26 Info_1 l "" +STARTLINE T "UVMask\nLast change: 08-04-2015\n\nFabian Holtz\nholtzf@gmail.com"}
+}
+Input {
+inputs 0
+name Input1
+xpos 70
+ypos 39
+}
+Shuffle {
+in rgb
+blue black
+alpha black
+name channel
+label "\[value in] to \[value out]"
+xpos 70
+ypos 81
+}
+set Nc0ae6a30 [stack 0]
+Expression {
+temp_name0 dx
+temp_expr0 cos(radians(rotation))*(r-ColorPicker.color.r)-sin(radians(rotation))*(g-ColorPicker.color.g)
+temp_name1 dy
+temp_expr1 sin(radians(rotation))*(r-ColorPicker.color.r)+cos(radians(rotation))*(g-ColorPicker.color.g)
+temp_name2 sw
+temp_expr2 size.w/20
+temp_name3 sh
+temp_expr3 size.h/20
+expr3 clamp(1-pow2(dx/sw))*clamp(1-pow2(dy/sh))
+name rectangular
+xpos 180
+ypos 134
+}
+push $Nc0ae6a30
+Expression {
+temp_name0 dx
+temp_expr0 cos(radians(rotation))*(r-ColorPicker.color.r)-sin(radians(rotation))*(g-ColorPicker.color.g)
+temp_name1 dy
+temp_expr1 sin(radians(rotation))*(r-ColorPicker.color.r)+cos(radians(rotation))*(g-ColorPicker.color.g)
+temp_name2 sw
+temp_expr2 size.w/20
+temp_name3 sh
+temp_expr3 size.h/20
+expr3 1-sqrt(pow2(dx/sw)+pow2(dy/sh))
+name circular
+xpos -40
+ypos 135
+}
+Dissolve {
+inputs 2
+channels alpha
+name shape
+xpos 70
+ypos 201
+}
+Grade {
+channels alpha
+whitepoint {{1-parent.coresize x1105 0.66}}
+gamma {{parent.gamma}}
+white_clamp true
+name Grade1
+xpos 70
+ypos 249
+}
+Output {
+name Output1
+xpos 70
+ypos 327
+}
+Constant {
+inputs 0
+channels rgb
+color {0.5 0.5 0 1}
+name ColorPicker
+xpos 283
+ypos -9
+}
+end_group

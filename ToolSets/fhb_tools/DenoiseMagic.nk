@@ -1,0 +1,178 @@
+set cut_paste_input [stack 0]
+version 10.5 v5
+push $cut_paste_input
+Group {
+ name DenoiseMagic
+ help "Reduces noise, flickering etc (for example in GI passes) by blending several consecutive frames\n\nPlug the CornerPin input in a CornerPin node that is tracked to the Image Plane that needs a denoise/deflicker.\n\nIf a camera is available, you may want to use the CardtoTrack Plugin to create the CornerPin."
+ tile_color 0x7f7f7fff
+ selected true
+ xpos -480
+ ypos 8
+ addUserKnob {20 DenoiseMagic}
+ addUserKnob {41 channels T Remove1.channels}
+ addUserKnob {3 frames l average t "number of frames to average"}
+ frames 7
+ addUserKnob {41 filter T CornerPin2D9.filter}
+ addUserKnob {6 normalise l "normalise frame edges" +STARTLINE}
+ normalise true
+ addUserKnob {3 adjustBBox l "adjust BBox" t "If the frame edges look weird after normalising, try shrinking the BBox by a pixel"}
+ addUserKnob {26 ""}
+ addUserKnob {41 maskChannelMask l mask -STARTLINE T mix.maskChannelMask}
+ addUserKnob {41 invert_mask l invert -STARTLINE T mix.invert_mask}
+ addUserKnob {41 which l mix T mix.which}
+ addUserKnob {20 Info_tab l Info}
+ addUserKnob {26 dasname l "" +STARTLINE T "<font size='7'>DenoiseMagic</font> v2.0"}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2019-05-08\n"}
+ addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
+ addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
+}
+ Input {
+  inputs 0
+  name mask
+  xpos 70
+  ypos 639
+  number 2
+ }
+ AddChannels {
+  channels rgba
+  name AddChannels1
+  xpos 70
+  ypos 687
+ }
+ Dot {
+  name Dot9
+  xpos 104
+  ypos 810
+ }
+ Input {
+  inputs 0
+  name Image
+  xpos 510
+  ypos 182
+ }
+ Dot {
+  name Dot2
+  xpos 544
+  ypos 330
+ }
+set Nc00d380 [stack 0]
+ Dot {
+  name Dot1
+  xpos 324
+  ypos 330
+ }
+ Remove {
+  operation keep
+  channels rgba
+  name Remove1
+  xpos 290
+  ypos 374
+ }
+ AdjBBox {
+  numpixels {{parent.adjustBBox}}
+  name AdjBBox1
+  xpos 290
+  ypos 446
+ }
+add_layer {temp temp.alpha}
+ Shuffle {
+  in none
+  red white
+  out temp
+  name Shuffle1
+  xpos 290
+  ypos 494
+ }
+ TimeWarp {
+  lookup {{floor(x%1*(parent.frames-1)-int((parent.frames-1)/2)+x)}}
+  time ""
+  filter nearest
+  name TimeWarp1
+  xpos 290
+  ypos 542
+ }
+ CornerPin2D {
+  to1 {{CornerPin.to1(floor(x))} {CornerPin.to1(floor(x))}}
+  to2 {{CornerPin.to2(floor(x))} {CornerPin.to2(floor(x))}}
+  to3 {{CornerPin.to3(floor(x))} {CornerPin.to3(floor(x))}}
+  to4 {{CornerPin.to4(floor(x))} {CornerPin.to4(floor(x))}}
+  invert false
+  from1 {{to1(ref_frame)} {to1(ref_frame)}}
+  from2 {{to2(ref_frame)} {to2(ref_frame)}}
+  from3 {{to3(ref_frame)} {to3(ref_frame)}}
+  from4 {{to4(ref_frame)} {to4(ref_frame)}}
+  name CornerPin2D9
+  xpos 290
+  ypos 590
+  addUserKnob {20 User}
+  addUserKnob {3 ref_frame l "ref frame"}
+  ref_frame {{TimeWarp1.lookup}}
+ }
+ TimeBlur {
+  divisions {{parent.frames}}
+  shutter 1
+  shuttercustomoffset {{1/divisions/2}}
+  name TimeBlur1
+  xpos 290
+  ypos 638
+ }
+ Unpremult {
+  channels all
+  alpha temp.alpha
+  name Unpremult1
+  xpos 290
+  ypos 680
+  disable {{!parent.normalise}}
+ }
+push $Nc00d380
+ Dot {
+  name Dot3
+  xpos 544
+  ypos 810
+ }
+set Nc05ed80 [stack 0]
+ Dissolve {
+  inputs 2+1
+  channels {{{parent.Remove1.channels}}}
+  which 1
+  maskChannelMask -rgba.alpha
+  name mix
+  xpos 290
+  ypos 806
+ }
+ Dot {
+  name Dot4
+  xpos 324
+  ypos 954
+ }
+push $Nc05ed80
+ Copy {
+  inputs 2
+  channels {{{Remove1.channels}}}
+  name Copy1
+  selected true
+  xpos 510
+  ypos 937
+ }
+ Output {
+  name Output
+  xpos 510
+  ypos 1094
+ }
+ Input {
+  inputs 0
+  name CornerPin
+  xpos 70
+  ypos 422
+  number 1
+  addUserKnob {20 User}
+  addUserKnob {12 to1}
+  to1 {{input1.to1} {input1.to1}}
+  addUserKnob {12 to2}
+  to2 {{input1.to2} {input1.to2}}
+  addUserKnob {12 to3}
+  to3 {{input1.to3} {input1.to3}}
+  addUserKnob {12 to4}
+  to4 {{input1.to4} {input1.to4}}
+ }
+end_group

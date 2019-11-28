@@ -1,0 +1,67 @@
+set cut_paste_input [stack 0]
+version 11.3 v4
+push $cut_paste_input
+Group {
+ name Binarator
+ knobChanged "n = nuke.thisNode()\nk = nuke.thisKnob()\n\nif k.name() == 'activate':\n    n.knobs()\['operator2'].setEnabled(k.value()==True)\n    n.knobs()\['threshold2'].setEnabled(k.value()==True)"
+ label "\[value _label_str]"
+ selected true
+ xpos 2050
+ ypos -2655
+ addUserKnob {20 BinaratorTab l Binarator}
+ addUserKnob {41 from0 l channel T Copy1.from0}
+ addUserKnob {26 _1 l " "}
+ addUserKnob {4 operator l value M {< <= == != >= > "" ""}}
+ operator >
+ addUserKnob {7 threshold l "" -STARTLINE}
+ addUserKnob {6 activate l "" +STARTLINE +STARTLINE}
+ addUserKnob {4 operator2 l "  and " -STARTLINE +DISABLED M {< <= == != >= > "" ""}}
+ addUserKnob {7 threshold2 l "" -STARTLINE +DISABLED}
+ threshold2 1
+ addUserKnob {1 _label_str l "" +STARTLINE +INVISIBLE}
+ _label_str "\[value operator] \[value threshold] \[if \{\[value activate]\} \{return \[format \"and %s %s\" \[value operator2] \[value threshold2]]\}]"
+ addUserKnob {20 Info_tab l Info}
+ addUserKnob {26 dasname l "" +STARTLINE T "<font size='5'>Binarator</font> v1.0<br>"}
+ addUserKnob {26 ""}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2019-07-10\n"}
+ addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
+ addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos 509
+  ypos -615
+ }
+set N34302a70 [stack 0]
+push $N34302a70
+ Copy {
+  inputs 2
+  from0 -rgba.alpha
+  to0 rgba.alpha
+  name Copy1
+  xpos 509
+  ypos -543
+ }
+ Expression {
+  expr3 "activate ? a \[value operator] parent.threshold && a \[value operator2] parent.threshold2 : a \[value operator] parent.threshold"
+  name Expression
+  xpos 509
+  ypos -490
+ }
+set Nd55b7ee0 [stack 0]
+push $Nd55b7ee0
+ Copy {
+  inputs 2
+  from0 rgba.alpha
+  to0 {{{parent.Copy1.from0}}}
+  name Copy2
+  xpos 509
+  ypos -433
+ }
+ Output {
+  name Output1
+  xpos 510
+  ypos -370
+ }
+end_group

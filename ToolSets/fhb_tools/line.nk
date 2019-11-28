@@ -1,0 +1,112 @@
+set cut_paste_input [stack 0]
+version 7.0 v8
+push $cut_paste_input
+Group {
+ name Line
+ help "Creates a line between two points"
+ selected true
+ xpos -480
+ ypos -153
+ addUserKnob {20 User}
+ addUserKnob {19 color}
+ color 1
+ addUserKnob {6 color_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+ addUserKnob {7 line_size l "line size" R 0 100}
+ line_size 10
+ addUserKnob {7 line_hardness l "line hardness"}
+ line_hardness 0.2
+ addUserKnob {26 ""}
+ addUserKnob {41 translate1 T point1.translate}
+ addUserKnob {41 translate2 T point2.translate}
+ addUserKnob {20 Info}
+ addUserKnob {26 Info_1 l "" +STARTLINE T "Line\nLast change: 03-04-2015\n\nFabian Holtz\nholtzf@gmail.com"}
+}
+ Transform {
+  inputs 0
+  translate {50 100}
+  name point1
+  xpos -260
+  ypos 134
+ }
+ Transform {
+  inputs 0
+  translate {150 150}
+  name point2
+  xpos -40
+  ypos 134
+ }
+ Input {
+  inputs 0
+  name Input
+  xpos -150
+  ypos 62
+ }
+ RotoPaint {
+  curves {{{v x3f99999a}
+  {f 0}
+  {n
+   {layer Root
+    {f 512}
+    {t x44800000 x44100000}
+    {a}
+    {cubiccurve Brush1 512 catmullrom
+     {cc
+      {f 2080}
+      {px x447a4000
+       {{=point1.translate.x x41080100}
+        {=point1.translate.y x41199980}       1}
+       {{=point2.translate.x x42ef557a}
+        {=point2.translate.y x4210bbae}       1}}}
+     {tx x447a4000 x44813555 x44200000}
+     {a ro 0 go 0 bo 0 ao 0 bu 1 str 1 spx x44800000 spy x44100000 sb 1 ltn x447a4000 ltm x447a4000 tt x41800000 bs
+      {=Line.line_size x41200000}     a
+      {=Line.color.a x3ecccccd}     b
+      {=Line.color.b x3e28f5c3}     g
+      {=Line.color.g x3ee66666}     h
+      {=Line.line_hardness x3e4ccccd}     r
+      {=Line.color.r x3ea3d70a}}}}}}}
+  toolbox {selectAll {
+  { selectAll str 1 ssx 1 ssy 1 sf 1 }
+  { createBezier str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createBezierCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createBSpline str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createEllipse str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangle str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { createRectangleCusped str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { brush str 1 ssx 1 ssy 1 sf 1 sb 1 ltn 1001 ltm 1001 tt 16 }
+  { eraser src 2 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { clone src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { reveal src 3 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { dodge src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { burn src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { blur src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { sharpen src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+  { smear src 1 str 1 ssx 1 ssy 1 sf 1 sb 1 }
+} }
+  toolbar_show_paint_selection true
+  toolbar_brush_hardness 0.200000003
+  toolbar_lifetime_type single
+  toolbar_source_transform_scale {1 1}
+  toolbar_source_transform_center {1024 576}
+  color {{Line.color.r} {Line.color.g} {Line.color.b} {Line.color.a}}
+  colorOverlay {0 0 0 0}
+  lifetime_type "all frames"
+  lifetime_start 1001
+  lifetime_end 1001
+  view {}
+  motionblur_on true
+  brush_size {{Line.line_size 10}}
+  brush_spacing 0.05000000075
+  brush_hardness {{Line.line_hardness 0.200000003}}
+  source_black_outside true
+  name line
+  xpos -150
+  ypos 158
+ }
+ Output {
+  name Output
+  selected true
+  xpos -150
+  ypos 278
+ }
+end_group
