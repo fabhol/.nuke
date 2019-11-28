@@ -1,0 +1,341 @@
+set cut_paste_input [stack 0]
+version 11.3 v4
+push $cut_paste_input
+Group {
+ name pcBlur
+ tile_color 0x7f7f7fff
+ addUserKnob {20 DirBlurTab l DirBlur}
+ addUserKnob {4 output l mode t "Choose the layers that you want to affect.\n\nRGB: Only affects the RGB layer\n\nRGB + pc_alpha: Affects RGB and the per channel alpha layer. Select this mode, if you want to merge the result over a background.\n\npc_alpha: Only affect the per channel alpha layer. Select this mode if your RGB channels already have chromatic aberration (for example objects from the plate), and you want to merge them on top of a background.\nIn this case the RGB layer should not be premultiplied yet. Tick the 'premult RGB' check box in the pcMerge instead." M {RGB "RGB + pc_alpha" pc_alpha}}
+ addUserKnob {41 alpha_operation l " alpha" t "There is no way of retaining a correct alpha channel after seperately processing the RGB channels. This lets you generate a new alpha based on the pc_alpha layer.\n\n<b>original</b>: the original alpha is piped through\n<b>average</b>/<b>max</b>/<b>min</b>: average/max/min of the three pc_alpha channels\n<b>luminance</b>: luminance of the pc_alpha using the Rec. 709 luma coefficients" -STARTLINE T GenerateAlpha.operation}
+ addUserKnob {6 show_vectors l "show vectors" t "Overlays vectors over the image to better show the effect." +STARTLINE}
+ addUserKnob {3 res -STARTLINE}
+ res 20
+ addUserKnob {26 divider01 l " "}
+ addUserKnob {4 operation M {blur defocus}}
+ addUserKnob {18 scale R 0 10}
+ scale {0 0 0}
+ addUserKnob {7 aspect_ratio l "aspect ratio" R 0 2}
+ aspect_ratio 1
+ addUserKnob {26 _1 l "" +STARTLINE}
+ addUserKnob {26 "" l mask T ""}
+ addUserKnob {41 maskChannelMask l "" -STARTLINE T Dissolve1.maskChannelMask}
+ addUserKnob {41 inject -STARTLINE T Dissolve1.inject}
+ addUserKnob {41 invert_mask l invert -STARTLINE T Dissolve1.invert_mask}
+ addUserKnob {41 fringe -STARTLINE T Dissolve1.fringe}
+ addUserKnob {41 mix T Dissolve1.which}
+ addUserKnob {20 Info_tab l Info}
+ addUserKnob {26 dasname l "" +STARTLINE T "per channel<br><font size='5'>Blur</font> v1.02<br>"}
+ addUserKnob {26 what l "" +STARTLINE T "pcBlur is part of the pc toolset, a collection of nodes that offer the pos-\nsibility to affect the channels seperately. Chain them up in any way to\nachieve the desired effect.\n\nAn optional per channel alpha layer (pc_alpha) can be created to cor-\nrectly merge the result over a background. In this case it's necessary\nto use the pcMerge instead of a regular Merge."}
+ addUserKnob {26 divider l "" +STARTLINE}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2019-09-09"}
+ addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
+ addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
+}
+ Input {
+  inputs 0
+  name mask
+  xpos -1800
+  ypos 873
+  number 1
+ }
+ Dot {
+  name Dot1
+  xpos -1766
+  ypos 954
+ }
+ Input {
+  inputs 0
+  name Input
+  xpos -1580
+  ypos -375
+ }
+ Dot {
+  name Dot12
+  xpos -1546
+  ypos -246
+ }
+set N90a2360 [stack 0]
+ Dot {
+  name Dot17
+  xpos -1106
+  ypos -246
+ }
+set N90a6dd0 [stack 0]
+ Dot {
+  name Dot16
+  xpos -996
+  ypos -246
+ }
+ Expression {
+  temp_name0 resx
+  temp_expr0 width/res
+  temp_name1 resy
+  temp_expr1 height/ceil(res/width*height/pixel_aspect)
+  channel0 none
+  channel1 none
+  channel2 none
+  expr3 (1-clamp(floor((x+resx/2)%resx)))*(1-clamp(floor((y+resy/2)%resy)))*300
+  name Expression3
+  xpos -1030
+  ypos -202
+  addUserKnob {20 User}
+  addUserKnob {3 res}
+  res {{max(parent.res,1)}}
+ }
+ Shuffle {
+  red alpha
+  green alpha
+  blue alpha
+  name Shuffle4
+  xpos -1030
+  ypos -154
+ }
+ Dot {
+  name Dot15
+  xpos -996
+  ypos -102
+ }
+push $N90a6dd0
+ Merge2 {
+  inputs 2
+  name Merge2
+  xpos -1140
+  ypos -106
+  disable {{!parent.show_vectors}}
+ }
+add_layer {pc_alpha pc_alpha.red pc_alpha.green pc_alpha.blue}
+ Shuffle {
+  red alpha
+  green alpha
+  blue alpha
+  out pc_alpha
+  name Shuffle1
+  xpos -1140
+  ypos -10
+  disable {{"\[string first \"pc_alpha\" \[layers \[input this 0]]]>-1"}}
+ }
+ Remove {
+  operation keep
+  channels rgb
+  channels2 pc_alpha
+  name Remove1
+  xpos -1140
+  ypos 75
+ }
+ Dot {
+  name Dot3
+  xpos -1106
+  ypos 186
+ }
+set N90fd680 [stack 0]
+ Dot {
+  name Dot4
+  xpos -996
+  ypos 186
+ }
+ Defocus {
+  channels {rgba.red -rgba.green -rgba.blue pc_alpha.red}
+  defocus {{parent.scale.r}}
+  ratio {{max(abs(parent.aspect_ratio),0.000001)}}
+  name Defocus1
+  xpos -1030
+  ypos 249
+ }
+ Defocus {
+  channels {-rgba.red rgba.green -rgba.blue pc_alpha.green}
+  defocus {{parent.scale.g}}
+  ratio {{max(abs(parent.aspect_ratio),0.000001)}}
+  name Defocus2
+  xpos -1030
+  ypos 297
+ }
+ Defocus {
+  channels {-rgba.red -rgba.green rgba.blue pc_alpha.blue}
+  defocus {{parent.scale.b}}
+  ratio {{max(abs(parent.aspect_ratio),0.000001)}}
+  name Defocus3
+  xpos -1030
+  ypos 345
+ }
+ Dot {
+  name Dot11
+  xpos -996
+  ypos 426
+ }
+push $N90fd680
+ Blur {
+  channels {rgba.red -rgba.green -rgba.blue pc_alpha.red}
+  size {{parent.scale.r*parent.aspect_ratio} {parent.scale.r}}
+  name Blur1
+  xpos -1140
+  ypos 249
+ }
+ Blur {
+  channels {-rgba.red rgba.green -rgba.blue pc_alpha.green}
+  size {{parent.scale.g*parent.aspect_ratio} {parent.scale.g}}
+  name Blur2
+  xpos -1140
+  ypos 297
+ }
+ Blur {
+  channels {-rgba.red -rgba.green rgba.blue pc_alpha.blue}
+  size {{parent.scale.b*parent.aspect_ratio} {parent.scale.b}}
+  name Blur3
+  xpos -1140
+  ypos 345
+ }
+ Switch {
+  inputs 2
+  which {{parent.operation}}
+  name Switch1
+  xpos -1140
+  ypos 422
+ }
+ Dot {
+  name Dot9
+  xpos -1106
+  ypos 666
+ }
+set N91640b0 [stack 0]
+ Dot {
+  name Dot8
+  xpos -1106
+  ypos 762
+ }
+set N9168d30 [stack 0]
+ Group {
+  name GenerateAlpha
+  tile_color 0x7f7f7fff
+  selected true
+  xpos -1140
+  ypos 854
+  addUserKnob {20 GenerateAlpha_tab l GenerateAlpha}
+  addUserKnob {4 operation M {original average luminance max min "" "" "" ""}}
+ }
+  Input {
+   inputs 0
+   name Input
+   xpos -40
+   ypos 14
+  }
+  Dot {
+   name Dot1
+   xpos -6
+   ypos 114
+  }
+set N15b86ff0 [stack 0]
+  Expression {
+   expr3 min(pc_alpha.red,pc_alpha.green,pc_alpha.blue)
+   name min
+   xpos 180
+   ypos 206
+  }
+push $N15b86ff0
+  Expression {
+   expr3 max(pc_alpha.red,pc_alpha.green,pc_alpha.blue)
+   name max
+   xpos 70
+   ypos 206
+  }
+push $N15b86ff0
+  Expression {
+   expr3 pc_alpha.red*0.2126+pc_alpha.green*0.7152+pc_alpha.blue*0.0722
+   name luminance
+   xpos -40
+   ypos 206
+  }
+push $N15b86ff0
+  Expression {
+   expr3 (pc_alpha.red+pc_alpha.green+pc_alpha.blue)/3
+   name average
+   xpos -150
+   ypos 206
+  }
+push $N15b86ff0
+  Dot {
+   name Dot2
+   xpos -226
+   ypos 210
+  }
+  Switch {
+   inputs 5
+   which {{parent.operation}}
+   name Switch1
+   xpos -40
+   ypos 302
+  }
+  Output {
+   name Output1
+   xpos -40
+   ypos 398
+  }
+ end_group
+push $N9168d30
+push $N91640b0
+push $N90fd680
+push $N90a2360
+ Copy {
+  inputs 2
+  channels pc_alpha
+  name Copy10
+  xpos -1580
+  ypos 171
+  disable {{"parent.output==0 || Dissolve1.which<=0"}}
+ }
+ Dot {
+  name Dot6
+  xpos -1546
+  ypos 570
+ }
+set N917b920 [stack 0]
+ Dot {
+  name Dot7
+  xpos -1326
+  ypos 570
+ }
+ Copy {
+  inputs 2
+  channels rgb
+  name Copy1
+  xpos -1360
+  ypos 651
+  disable {{parent.output==2}}
+ }
+ Copy {
+  inputs 2
+  channels pc_alpha
+  name Copy6
+  xpos -1360
+  ypos 747
+  disable {{parent.output==0}}
+ }
+ Copy {
+  inputs 2
+  from0 rgba.alpha
+  to0 rgba.alpha
+  name Copy11
+  xpos -1360
+  ypos 849
+  disable {{GenerateAlpha.operation==0}}
+ }
+ Dot {
+  name Dot10
+  xpos -1326
+  ypos 954
+ }
+push $N917b920
+ Dissolve {
+  inputs 2+1
+  which 1
+  maskChannelMask none
+  name Dissolve1
+  xpos -1580
+  ypos 945
+  disable {{"(!\[exists parent.input0.name]) && (Merge2.disable)"}}
+ }
+ Output {
+  name Output1
+  xpos -1580
+  ypos 1070
+ }
+end_group
