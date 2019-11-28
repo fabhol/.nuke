@@ -1,14 +1,8 @@
-set cut_paste_input [stack 0]
-version 11.3 v3
-push $cut_paste_input
 Group {
  name pcFaberration
  onCreate "n = nuke.thisNode()\nn\['scale'].setFlag(nuke.NO_ANIMATION)\nn\['offset'].setFlag(nuke.NO_ANIMATION)"
  knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\n\ndef copy_values():\n    scale = node\['scale'].value()\n    list = \[scale\[0],scale\[1],scale\[2],0]    \n    offset = node\['offset'].value()\n    new_curve = 'curve \{curve l x0.25 %s x0.5 %s x0.75 %s\}' % (list\[0]+offset, list\[1]+offset, list\[2]+offset)\n    with node:\n        nuke.toNode('TimeDissolve')\['lut'].fromScript(new_curve)\n\nif knob.name() in \['scale', 'offset']:\n    copy_values()\n\nif knob.name() == 'helper':\n    if knob.value() is True:\n        copy_values()\n        node\['scale'].setEnabled(True)\n        node\['offset'].setEnabled(True)"
  tile_color 0x7f7f7fff
- selected true
- xpos -370
- ypos 8
  addUserKnob {20 FaberrationTab l Faberration}
  addUserKnob {4 output l mode t "Choose the layers that you want to affect.\n\nRGB: Only affects the RGB layer\n\nRGB + pc_alpha: Affects RGB and the per channel alpha layer. Select this mode, if you want to merge the result over a background.\n\npc_alpha: Only affect the per channel alpha layer. Select this mode if your RGB channels already have chromatic aberration (for example objects from the plate), and you want to merge them on top of a background.\nIn this case the RGB layer should not be premultiplied yet. Tick the 'premult RGB' check box in the pcMerge instead." M {RGB "RGB + pc_alpha" pc_alpha}}
  addUserKnob {41 alpha_operation l " alpha" t "There is no way of retaining a correct alpha channel after seperately processing the RGB channels. This lets you generate a new alpha based on the pc_alpha layer.\n\n<b>original</b>: the original alpha is piped through\n<b>average</b>/<b>max</b>/<b>min</b>: average/max/min of the three pc_alpha channels\n<b>luminance</b>: luminance of the pc_alpha using the Rec. 709 luma coefficients" -STARTLINE T GenerateAlpha.operation}
@@ -18,33 +12,9 @@ Group {
  addUserKnob {26 divider01 l " "}
  addUserKnob {18 samples l samples* t "How often the curve gets subsampled for each channel. Carefully increase the value per channel until there are no visible steps anymore.\n\nThe amount of samples directly influences the speed of this node." R 1 10}
  samples {1 1 1}
- addUserKnob {6 samples_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 samples_panelDropped_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 samples_panelDropped_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 samples_panelDropped_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 samples_panelDropped_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 samples_panelDropped_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 samples_panelDropped_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 samples_panelDropped_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 samples_panelDropped_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 samples_panelDropped_1_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 samples_panelDropped_1_1_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 samples_panelDropped_1_1_1_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {26 spacer l " " T " "}
  addUserKnob {18 scale t "Controls the curve on the basis of the scale of each channel. Look at the curve below to see how the values affect it.\nFor the initial setting you can try to pick the chromatic aberration of the plate by dragging the sample area over a high contrast aberrated edge. Then adjust until it matches the plate." R -1 1}
  scale {-0.5 0 0.5}
- addUserKnob {6 scale_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 scale_panelDropped_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 scale_panelDropped_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 scale_panelDropped_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 scale_panelDropped_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 scale_panelDropped_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 scale_panelDropped_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 scale_panelDropped_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 scale_panelDropped_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 scale_panelDropped_1_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 scale_panelDropped_1_1_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
- addUserKnob {6 scale_panelDropped_1_1_1_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {7 offset t "Global scale offset. Adjust to prevent stretched or black pixels at the edge of the format." R -1 1}
  addUserKnob {6 helper t "checker to indicate whether the rgb control knobs are disabled or not" +INVISIBLE +STARTLINE}
  helper true
