@@ -1,0 +1,875 @@
+set cut_paste_input [stack 0]
+version 11.3 v4
+push $cut_paste_input
+add_layer {P_filt P_filt.red P_filt.green P_filt.blue P_filt.alpha}
+Group {
+ name DerSizzlefix_TimeBlur
+ selected true
+ xpos -5320
+ ypos 3657
+ addUserKnob {20 User}
+ addUserKnob {41 channels T Dissolve1.channels}
+ addUserKnob {6 black_outside l "input is set to 'black outside'" +STARTLINE}
+ black_outside true
+ addUserKnob {41 P T Shuffle1.in}
+ addUserKnob {3 amount}
+ amount 10
+ addUserKnob {7 offset -STARTLINE R -1 1}
+ addUserKnob {41 filter T STMap1.filter}
+ addUserKnob {41 maskChannelMask l mask T Dissolve1.maskChannelMask}
+ addUserKnob {41 inject -STARTLINE T Dissolve1.inject}
+ addUserKnob {41 invert_mask l invert -STARTLINE T Dissolve1.invert_mask}
+ addUserKnob {41 fringe -STARTLINE T Dissolve1.fringe}
+ addUserKnob {41 which l mix T Dissolve1.which}
+}
+ Input {
+  inputs 0
+  name Cam
+  xpos -810
+  ypos 8
+  number 1
+ }
+ NoOp {
+  inputs 0
+  name detour
+  xpos -370
+  ypos 182
+  addUserKnob {20 User}
+  addUserKnob {78 cwm l "camera world matrix" n 16}
+  cwm {{"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"} {"\[topnode parent.input1].world_matrix(ref_frame)"}}
+  addUserKnob {7 ndc}
+  ndc {{"\[topnode parent.input1].haperture(ref_frame) / \[topnode parent.input1].focal(ref_frame) / 2"}}
+  addUserKnob {3 ref_frame l "ref frame"}
+  ref_frame {{int(x)-parent.TimeOffset1.time_offset}}
+ }
+ Input {
+  inputs 0
+  name mask
+  xpos -260
+  ypos 777
+  number 3
+ }
+ Dot {
+  name Dot5
+  xpos -226
+  ypos 858
+ }
+ Input {
+  inputs 0
+  name P
+  xpos -260
+  ypos 8
+  number 2
+ }
+ Shuffle {
+  in P_filt
+  in2 rgba
+  alpha alpha2
+  out rgb
+  name Shuffle1
+  label "\[value in]:\[value out]"
+  xpos -260
+  ypos 57
+ }
+ Group {
+  name ExtendVectors
+  xpos -260
+  ypos 135
+  disable true
+ }
+  Input {
+   inputs 0
+   name Input1
+   xpos 475
+   ypos 259
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression32
+   xpos 475
+   ypos 415
+  }
+set N1475b140 [stack 0]
+  Dot {
+   name Dot2
+   xpos 509
+   ypos 500
+  }
+set N147691b0 [stack 0]
+push $N1475b140
+  Blur {
+   size {{itt*mult}}
+   name Blur_1
+   xpos 588
+   ypos 409
+   addUserKnob {20 User}
+   addUserKnob {7 mult}
+   mult 2
+   addUserKnob {3 itt}
+   itt {{"\[lrange \[split \[value name] _] 1 1]"}}
+  }
+  Unpremult {
+   name Unpremult1
+   xpos 588
+   ypos 445
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression1
+   selected true
+   xpos 588
+   ypos 473
+  }
+  Merge2 {
+   inputs 2
+   name Merge1
+   xpos 588
+   ypos 497
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression2
+   xpos 588
+   ypos 545
+  }
+set N147a2500 [stack 0]
+  Dot {
+   name Dot1
+   xpos 622
+   ypos 630
+  }
+push $N147a2500
+  Blur {
+   size {{itt*mult}}
+   name Blur_2
+   xpos 701
+   ypos 539
+   addUserKnob {20 User}
+   addUserKnob {7 mult}
+   mult 2
+   addUserKnob {3 itt}
+   itt {{"\[lrange \[split \[value name] _] 1 1]"}}
+  }
+  Unpremult {
+   name Unpremult2
+   xpos 701
+   ypos 575
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression3
+   xpos 701
+   ypos 603
+  }
+  Merge2 {
+   inputs 2
+   name Merge2
+   xpos 701
+   ypos 627
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression4
+   xpos 701
+   ypos 671
+  }
+set N147e9930 [stack 0]
+  Dot {
+   name Dot3
+   xpos 735
+   ypos 756
+  }
+push $N147e9930
+  Blur {
+   size {{itt*mult}}
+   name Blur_3
+   xpos 814
+   ypos 665
+   addUserKnob {20 User}
+   addUserKnob {7 mult}
+   mult 2
+   addUserKnob {3 itt}
+   itt {{"\[lrange \[split \[value name] _] 1 1]"}}
+  }
+  Unpremult {
+   name Unpremult3
+   xpos 814
+   ypos 701
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression5
+   xpos 814
+   ypos 729
+  }
+  Merge2 {
+   inputs 2
+   name Merge3
+   xpos 814
+   ypos 753
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression6
+   xpos 814
+   ypos 801
+  }
+set N14830d20 [stack 0]
+  Dot {
+   name Dot4
+   xpos 848
+   ypos 886
+  }
+push $N14830d20
+  Blur {
+   size {{itt*mult}}
+   name Blur_4
+   xpos 927
+   ypos 795
+   addUserKnob {20 User}
+   addUserKnob {7 mult}
+   mult 2
+   addUserKnob {3 itt}
+   itt {{"\[lrange \[split \[value name] _] 1 1]"}}
+  }
+  Unpremult {
+   name Unpremult4
+   xpos 927
+   ypos 831
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression7
+   xpos 927
+   ypos 859
+  }
+  Merge2 {
+   inputs 2
+   name Merge4
+   xpos 927
+   ypos 883
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression8
+   xpos 927
+   ypos 946
+  }
+set N14878160 [stack 0]
+  Dot {
+   name Dot5
+   xpos 961
+   ypos 1031
+  }
+push $N14878160
+  Blur {
+   size {{itt*mult}}
+   name Blur_5
+   xpos 1040
+   ypos 940
+   addUserKnob {20 User}
+   addUserKnob {7 mult}
+   mult 2
+   addUserKnob {3 itt}
+   itt {{"\[lrange \[split \[value name] _] 1 1]"}}
+  }
+  Unpremult {
+   name Unpremult5
+   xpos 1040
+   ypos 976
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression9
+   xpos 1040
+   ypos 1004
+  }
+  Merge2 {
+   inputs 2
+   name Merge5
+   xpos 1040
+   ypos 1028
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression10
+   xpos 1040
+   ypos 1076
+  }
+set N148bf4e0 [stack 0]
+  Dot {
+   name Dot6
+   xpos 1074
+   ypos 1161
+  }
+push $N148bf4e0
+  Blur {
+   size {{itt*mult}}
+   name Blur_6
+   xpos 1153
+   ypos 1070
+   addUserKnob {20 User}
+   addUserKnob {7 mult}
+   mult 2
+   addUserKnob {3 itt}
+   itt {{"\[lrange \[split \[value name] _] 1 1]"}}
+  }
+  Unpremult {
+   name Unpremult6
+   xpos 1153
+   ypos 1106
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression11
+   xpos 1153
+   ypos 1134
+  }
+  Merge2 {
+   inputs 2
+   name Merge6
+   xpos 1153
+   ypos 1158
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression12
+   xpos 1153
+   ypos 1202
+  }
+set N14906970 [stack 0]
+  Dot {
+   name Dot7
+   xpos 1187
+   ypos 1287
+  }
+push $N14906970
+  Blur {
+   size {{itt*mult}}
+   name Blur_8
+   xpos 1266
+   ypos 1196
+   addUserKnob {20 User}
+   addUserKnob {7 mult}
+   mult 2
+   addUserKnob {3 itt}
+   itt {{"\[lrange \[split \[value name] _] 1 1]"}}
+  }
+  Unpremult {
+   name Unpremult7
+   xpos 1266
+   ypos 1232
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression13
+   xpos 1266
+   ypos 1260
+  }
+  Merge2 {
+   inputs 2
+   name Merge7
+   xpos 1266
+   ypos 1284
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression14
+   xpos 1266
+   ypos 1332
+  }
+set N1494dcf0 [stack 0]
+  Dot {
+   name Dot8
+   xpos 1300
+   ypos 1417
+  }
+push $N1494dcf0
+  Blur {
+   size {{itt*mult}}
+   name Blur_7
+   xpos 1379
+   ypos 1326
+   addUserKnob {20 User}
+   addUserKnob {7 mult}
+   mult 2
+   addUserKnob {3 itt}
+   itt {{"\[lrange \[split \[value name] _] 1 1]"}}
+  }
+  Unpremult {
+   name Unpremult8
+   xpos 1379
+   ypos 1362
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression15
+   xpos 1379
+   ypos 1390
+  }
+  Merge2 {
+   inputs 2
+   name Merge8
+   xpos 1379
+   ypos 1414
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression16
+   xpos 1379
+   ypos 1463
+  }
+set N14995200 [stack 0]
+  Dot {
+   name Dot9
+   xpos 1413
+   ypos 1548
+  }
+push $N14995200
+  Blur {
+   size {{itt*mult}}
+   name Blur_9
+   xpos 1492
+   ypos 1457
+   addUserKnob {20 User}
+   addUserKnob {7 mult}
+   mult 2
+   addUserKnob {3 itt}
+   itt {{"\[lrange \[split \[value name] _] 1 1]"}}
+  }
+  Unpremult {
+   name Unpremult9
+   xpos 1492
+   ypos 1493
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression17
+   xpos 1492
+   ypos 1521
+  }
+  Merge2 {
+   inputs 2
+   name Merge10
+   xpos 1492
+   ypos 1545
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression18
+   xpos 1492
+   ypos 1589
+  }
+set N149dc580 [stack 0]
+  Dot {
+   name Dot10
+   xpos 1526
+   ypos 1674
+  }
+push $N149dc580
+  Blur {
+   size {{itt*mult}}
+   name Blur_10
+   xpos 1605
+   ypos 1583
+   addUserKnob {20 User}
+   addUserKnob {7 mult}
+   mult 2
+   addUserKnob {3 itt}
+   itt {{"\[lrange \[split \[value name] _] 1 1]"}}
+  }
+  Unpremult {
+   name Unpremult10
+   xpos 1605
+   ypos 1619
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression19
+   xpos 1605
+   ypos 1647
+  }
+  Merge2 {
+   inputs 2
+   name Merge11
+   xpos 1605
+   ypos 1671
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression20
+   xpos 1605
+   ypos 1719
+  }
+set N14a23910 [stack 0]
+  Dot {
+   name Dot11
+   xpos 1639
+   ypos 1804
+  }
+push $N14a23910
+  Blur {
+   size {{itt*mult}}
+   name Blur_11
+   xpos 1718
+   ypos 1713
+   addUserKnob {20 User}
+   addUserKnob {7 mult}
+   mult 2
+   addUserKnob {3 itt}
+   itt {{"\[lrange \[split \[value name] _] 1 1]"}}
+  }
+  Unpremult {
+   name Unpremult11
+   xpos 1718
+   ypos 1749
+  }
+  Expression {
+   expr3 r+g!=0
+   name Expression21
+   xpos 1718
+   ypos 1777
+  }
+  Merge2 {
+   inputs 2
+   name Merge12
+   xpos 1718
+   ypos 1801
+  }
+  Blur {
+   size 9
+   name Blur1
+   xpos 1718
+   ypos 2128
+  }
+push $N147691b0
+  Merge2 {
+   inputs 2
+   operation under
+   name Merge9
+   xpos 475
+   ypos 2134
+  }
+  Output {
+   name Output1
+   xpos 475
+   ypos 2325
+  }
+ end_group
+ NoTimeBlur {
+  rounding floor
+  name NoTimeBlur1
+  xpos -260
+  ypos 189
+ }
+ Expression {
+  temp_name0 ia
+  temp_expr0 width/height
+  expr0 "((r-detour.cwm.3)*detour.cwm.0+(g-detour.cwm.7)*detour.cwm.4+(b-detour.cwm.11)*detour.cwm.8)/-((r-detour.cwm.3)*detour.cwm.2+(g-detour.cwm.7)*detour.cwm.6+(b-detour.cwm.11)*detour.cwm.10)/detour.ndc * 0.5 +0.5"
+  expr1 "((r-detour.cwm.3)*detour.cwm.1+(g-detour.cwm.7)*detour.cwm.5+(b-detour.cwm.11)*detour.cwm.9)/-((r-detour.cwm.3)*detour.cwm.2+(g-detour.cwm.7)*detour.cwm.6+(b-detour.cwm.11)*detour.cwm.10)/detour.ndc * pixel_aspect * ia * 0.5 + 0.5"
+  name ppos2uv
+  xpos -260
+  ypos 254
+ }
+ Dot {
+  name Dot6
+  xpos -226
+  ypos 569
+ }
+ Input {
+  inputs 0
+  name Image
+  xpos -480
+  ypos 8
+ }
+ Dot {
+  name Dot2
+  xpos -446
+  ypos 114
+ }
+set N14aacfd0 [stack 0]
+ AddChannels {
+  channels alpha
+  color 1
+  name AddChannels2
+  xpos -480
+  ypos 153
+ }
+ TimeOffset {
+  time_offset {{floor((x%1+int(parent.offset/2*parent.amount)/parent.amount)*parent.amount-parent.amount/2+parent.amount%2/2)}}
+  time ""
+  name TimeOffset1
+  label "\[value time_offset]"
+  xpos -480
+  ypos 267
+ }
+ Dot {
+  name Dot8
+  xpos -446
+  ypos 330
+ }
+set N14ac3b90 [stack 0]
+ Dot {
+  name Dot9
+  xpos -556
+  ypos 330
+ }
+add_layer {correct_values correct_values.red correct_values.green correct_values.blue}
+ AddChannels {
+  channels correct_values
+  color 1
+  name AddChannels1
+  xpos -590
+  ypos 393
+ }
+ Crop {
+  box {{bbox.x+1} {bbox.y+1} {bbox.r-1} {bbox.t-1}}
+  name Crop1
+  xpos -590
+  ypos 446
+  disable {{!parent.black_outside}}
+ }
+ Dot {
+  name Dot7
+  xpos -556
+  ypos 498
+ }
+push $N14ac3b90
+ Copy {
+  inputs 2
+  from0 correct_values.blue
+  to0 correct_values.blue
+  name Copy2
+  xpos -480
+  ypos 489
+ }
+ STMap {
+  inputs 2
+  uv rgb
+  name STMap1
+  xpos -480
+  ypos 560
+ }
+set N14af3be0 [stack 0]
+ TimeBlur {
+  divisions {{parent.amount}}
+  shutter 1
+  shuttercustomoffset {{1/divisions/2}}
+  name TimeBlur1
+  xpos -480
+  ypos 638
+ }
+set N14afea70 [stack 0]
+ Unpremult {
+  channels all
+  alpha correct_values.blue
+  name Unpremult2
+  xpos -480
+  ypos 705
+ }
+push $N14aacfd0
+ Dot {
+  name Dot1
+  xpos -666
+  ypos 114
+ }
+ Dot {
+  name Dot4
+  xpos -666
+  ypos 858
+ }
+set N14b153e0 [stack 0]
+ Dissolve {
+  inputs 2+1
+  which 1
+  maskChannelMask -rgba.alpha
+  invert_mask true
+  name Dissolve1
+  xpos -480
+  ypos 849
+ }
+set N14b19f60 [stack 0]
+ Output {
+  name Output1
+  xpos -480
+  ypos 974
+ }
+push $N14b153e0
+push $N14b19f60
+ Unpremult {
+  name Unpremult1
+  xpos -409
+  ypos 759
+ }
+ Copy {
+  inputs 2
+  from0 rgba.alpha
+  to0 rgba.alpha
+  name Copy1
+  xpos -370
+  ypos 801
+ }
+ Premult {
+  name Premult1
+  xpos -370
+  ypos 837
+ }
+push $N14afea70
+push $N14af3be0
+ TimeWarp {
+  lookup 1013.6
+  time ""
+  filter none
+  name TimeWarp1
+  xpos -248
+  ypos 615
+ }
+ Viewer {
+  inputs 2
+  frame_range 1-2216
+  center_fstop -1
+  viewerProcess "project (rec709)"
+  name Viewer1
+  xpos -73
+  ypos 255
+ }
+push $N14af3be0
+ Group {
+  name TemporalTim
+  xpos -346
+  ypos 675
+  addUserKnob {20 TemporarlTimTab l TemporarlTim}
+  addUserKnob {3 divisions}
+  divisions 10
+  addUserKnob {6 fastmode l "fast mode" +STARTLINE}
+ }
+  Input {
+   inputs 0
+   name Input1
+   xpos 405
+   ypos 370
+  }
+  Assert {
+   expression {{"TimBlur1.divisions < 1024"}}
+   message "Calm the flip down, \[value TimBlur1.divisions] is too many, try something (far) below 1024"
+   name error
+   xpos 405
+   ypos 406
+  }
+  Dot {
+   name Dot1
+   xpos 439
+   ypos 430
+  }
+set N14b88d80 [stack 0]
+  Dot {
+   name Dot2
+   xpos 586
+   ypos 447
+  }
+  Blur {
+   size 2
+   name Blur1
+   xpos 552
+   ypos 696
+  }
+push $N14b88d80
+  NoTimeBlur {
+   name NoTimBlur1
+   xpos 405
+   ypos 448
+   disable true
+  }
+  NoOp {
+   name Mistakle
+   xpos 405
+   ypos 472
+  }
+  Reformat {
+   type scale
+   scale {1 {parent.TimBlur1.divisions}}
+   center false
+   pbb true
+   name Reformat3
+   xpos 405
+   ypos 496
+  }
+  BlackOutside {
+   name BlackOutside1
+   xpos 405
+   ypos 520
+  }
+  Position {
+   translate {0 {"(frame - floor(frame)) * TimBlur1.divisions * Mistakle.height"}}
+   name Position1
+   selected true
+   xpos 405
+   ypos 544
+  }
+  TimeBlur {
+   divisions {{parent.divisions}}
+   shutter 1
+   shutteroffset start
+   shuttercustomoffset 0
+   name TimBlur1
+   xpos 405
+   ypos 568
+  }
+  Multiply {
+   value {{TimBlur1.divisions}}
+   name Multiply1
+   xpos 405
+   ypos 592
+  }
+  Blur {
+   name Blur14
+   xpos 405
+   ypos 628
+  }
+set N14be13e0 [stack 0]
+  BlinkScript {
+   recompileCount 25
+   ProgramGroup 1
+   KernelDescription "2 \"Ultramistakle\" iterate componentWise 8621818d42b3d2c1f8752edda8585816cbc1c28f541a073b49c34d04ad4fa422 2 \"src1\" Read Random \"dst\" Write Point 2 \"height\" Int 1 AQAAAA== \"divisons\" Int 1 AQAAAA== 2 \"m_height\" 1 1 \"m_divisons\" 1 1 0"
+   kernelSource "kernel Ultramistakle : ImageComputationKernel<eComponentWise>\n\{\n  Image<eRead, eAccessRandom, eEdgeClamped> src1; \n  Image<eWrite> dst;\n  param:\n    int m_height;\n    int m_divisons;\n  void define() \{\n    defineParam(m_height, \"height\", 1);\n    defineParam(m_divisons, \"divisons\", 1);\n  \}\n  void process(int2 pos) \{\n      dst() = 0.0;\n\n    if(pos.y > m_height) \{\n      dst() = 0.0;\n    \} else \{\n      float values\[1024];\n      for(int i = 0; i < min(1024, m_divisons); ++i) \{\n        values\[i] = src1(pos.x, pos.y + m_height*i);\n      \};\n      float outputS = median(values,  m_divisons);\n      dst() = outputS;\n    \}\n  \}\n\};"
+   useGPUIfAvailable false
+   vectorize false
+   rebuild ""
+   Ultramistakle_height {{Mistakle.height}}
+   Ultramistakle_divisons {{parent.TimBlur1.divisions}}
+   rebuild_finalise ""
+   name BlinkScript3
+   xpos 405
+   ypos 664
+  }
+  Crop {
+   box {0 0 {width} {Mistakle.height}}
+   reformat true
+   crop false
+   name Crop5
+   xpos 405
+   ypos 700
+  }
+  Switch {
+   inputs 2
+   which {{parent.fastmode}}
+   name Switch1
+   xpos 405
+   ypos 758
+  }
+  Output {
+   name Output1
+   xpos 405
+   ypos 831
+  }
+push $N14be13e0
+  Viewer {
+   frame_range 1-2216
+   center_fstop -1
+   viewerProcess "project (rec709)"
+   name Viewer1
+   xpos 584
+   ypos 831
+  }
+ end_group
+end_group

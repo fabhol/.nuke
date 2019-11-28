@@ -1,0 +1,439 @@
+set cut_paste_input [stack 0]
+version 11.3 v3
+BackdropNode {
+ inputs 0
+ name BackdropNode1
+ tile_color 0xaaaaaa00
+ label bokeh
+ note_font_size 42
+ selected true
+ xpos -1678
+ ypos -271
+ bdwidth 197
+ bdheight 162
+}
+Noise {
+ inputs 0
+ gain 0.755
+ gamma 0.775
+ center {960 540}
+ name Noise2
+ selected true
+ xpos -1571
+ ypos -191
+}
+Grade {
+ white 1.94
+ gamma 2.26
+ white_clamp true
+ name Grade7
+ selected true
+ xpos -1571
+ ypos -165
+}
+push $cut_paste_input
+Crop {
+ box {0 0 100 {box.r}}
+ reformat true
+ crop false
+ name Crop4
+ selected true
+ xpos -1668
+ ypos -332
+}
+Flare {
+ position {{width/2} {height/2}}
+ radius {{(width/2)-4} {(width/2)-1} {width/2}}
+ ring_color 5
+ inner_color 1
+ name Flare4
+ selected true
+ xpos -1668
+ ypos -191
+}
+Merge2 {
+ inputs 2
+ operation multiply
+ name Merge7
+ selected true
+ xpos -1668
+ ypos -165
+}
+Crop {
+ box {0 0 100 {box.r}}
+ reformat true
+ name Crop5
+ selected true
+ xpos -1668
+ ypos -139
+}
+Read {
+ inputs 0
+ file_type cin
+ file C:/Users/fab/Downloads/0001.cin
+ format "2048 1556 0 0 2048 1556 1 2K_Super_35(full-ap)"
+ origset true
+ auto_alpha true
+ name Read6
+ selected true
+ xpos -1360
+ ypos -189
+}
+Grade {
+ multiply 0.1
+ name Grade2
+ selected true
+ xpos -1360
+ ypos -103
+ disable true
+}
+set N7b3e5800 [stack 0]
+Expression {
+ temp_name0 resx
+ temp_expr0 width/res
+ temp_name1 resy
+ temp_expr1 height/ceil(res/width*height/pixel_aspect)
+ channel0 none
+ channel1 none
+ channel2 none
+ expr3 (1-clamp(floor((x+resx/2)%resx)))*(1-clamp(floor((y+resy/2)%resy)))*300
+ name Expression3
+ selected true
+ xpos -1250
+ ypos -106
+ addUserKnob {20 User}
+ addUserKnob {3 res}
+ res 20
+}
+Shuffle {
+ red alpha
+ green alpha
+ blue alpha
+ name Shuffle4
+ selected true
+ xpos -1250
+ ypos -80
+}
+Grade {
+ channels all
+ black 0.0001
+ name Grade4
+ selected true
+ xpos -1250
+ ypos -54
+ disable true
+}
+push $N7b3e5800
+Merge2 {
+ inputs 2
+ name Merge3
+ selected true
+ xpos -1355
+ ypos -71
+}
+Group {
+ inputs 2
+ name HocusDefocus
+ selected true
+ xpos -1355
+ ypos -1
+ addUserKnob {20 User}
+ addUserKnob {12 center}
+ center {{width/2+.5} {height/2+.5}}
+ addUserKnob {14 overscan R 0 100}
+ addUserKnob {3 slices_w l "slices w"}
+ slices_w 10
+ addUserKnob {3 slices_h l h -STARTLINE}
+ slices_h 10
+ addUserKnob {14 overlap R 0 100}
+ addUserKnob {41 box_width l "global scale" T GlobalScale.box_width}
+ addUserKnob {7 ar l "aspect ratio"}
+ ar 1
+ addUserKnob {26 text_3 l " "}
+ addUserKnob {14 crop R 0 100}
+ crop {0 0.75}
+ addUserKnob {7 crop_weighting l weighting R 0 5}
+ crop_weighting 1
+ addUserKnob {26 text l " "}
+ addUserKnob {14 scale R 0 100}
+ scale {0 1}
+ addUserKnob {7 scale_weighting l weighting R 0 5}
+ scale_weighting 1
+ addUserKnob {26 text_1 l " "}
+ addUserKnob {7 catseye}
+ addUserKnob {7 catseye_weighting l weighting R 0 5}
+ catseye_weighting 1
+ addUserKnob {26 text_2 l " "}
+ addUserKnob {7 orientation}
+ orientation 1
+}
+ Input {
+  inputs 0
+  name Kernel
+  xpos -725
+  ypos 201
+  number 1
+ }
+ NoTimeBlur {
+  rounding floor
+  name NoTimeBlur2
+  xpos -725
+  ypos 248
+ }
+set N7da6dc00 [stack 0]
+ Transform {
+  translate {{(parent.Crop1.center_normalised.x<0?-pow(-parent.Crop1.center_normalised.x,parent.catseye_weighting):pow(parent.Crop1.center_normalised.x,parent.catseye_weighting))*hypot(width/2,height/2)*parent.catseye} {(parent.Crop1.center_normalised.y<0?-pow(-parent.Crop1.center_normalised.y,parent.catseye_weighting):pow(parent.Crop1.center_normalised.y,parent.catseye_weighting))*hypot(width/2,height/2)*parent.catseye}}
+  center {50 50}
+  name Transform1
+  xpos -613
+  ypos 264
+ }
+push $N7da6dc00
+ Merge2 {
+  inputs 2
+  operation min
+  name Merge1
+  xpos -725
+  ypos 289
+ }
+ Reformat {
+  type "to box"
+  box_width {{width}}
+  box_height {{height*parent.pixel_aspect}}
+  box_fixed true
+  box_pixel_aspect {{parent.pixel_aspect}}
+  resize distort
+  pbb true
+  name Reformat2
+  xpos -725
+  ypos 326
+ }
+ Reformat {
+  type "to box"
+  box_width 70
+  pbb true
+  name GlobalScale
+  xpos -725
+  ypos 367
+ }
+ Transform {
+  rotate {{"-degrees(atan2((parent.center.y-Crop1.center.y), ((parent.center.x-Crop1.center.x)*parent.pixel_aspect)))"}}
+  center {{width/2+.5} {height/2+.5}}
+  shutteroffset centred
+  name Rotate
+  xpos -725
+  ypos 422
+ }
+ Transform {
+  scale {{lerp(1,parent.scale.w,pow(Crop1.distance_normalised,parent.scale_weighting))} {lerp(1,parent.scale.h,pow(Crop1.distance_normalised,parent.scale_weighting))}}
+  center {{width/2+.5} {height/2+.5}}
+  shutteroffset centred
+  name ScaleOriented
+  xpos -725
+  ypos 458
+ }
+set N7da0cc00 [stack 0]
+ Transform {
+  rotate {{parent.Rotate.rotate}}
+  center {{width/2+.5} {height/2+.5}}
+  invert_matrix true
+  shutteroffset centred
+  name Rotate2
+  xpos -725
+  ypos 496
+ }
+ Crop {
+  box {{Crop1.center_normalised.x<0?-Crop1.center_normalised.x*width*parent.crop.w:0} {Crop1.center_normalised.y<0?-Crop1.center_normalised.y*height*parent.crop.h:0} {Crop1.center_normalised.x>0?width-(Crop1.center_normalised.x*width)*parent.crop.w:width} {Crop1.center_normalised.y>0?height-(Crop1.center_normalised.y*height)*parent.crop.h:height}}
+  name Crop
+  xpos -725
+  ypos 542
+ }
+ Transform {
+  scale {{parent.ar} 1}
+  center {{width/2+.5} {height/2+.5}}
+  shutteroffset centred
+  name AR
+  xpos -725
+  ypos 603
+ }
+ Transform {
+  scale 0.9
+  center {35 35}
+  name Transform2
+  xpos -725
+  ypos 629
+ }
+ Crop {
+  box {0 0 {width} {height}}
+  name Crop3
+  xpos -725
+  ypos 651
+ }
+ Expression {
+  channel0 {-rgba.red -rgba.green -rgba.blue}
+  channel1 {-rgba.red -rgba.green -rgba.blue}
+  channel2 {-rgba.red -rgba.green -rgba.blue}
+  expr3 (r+g+b)/3
+  name Expression2
+  xpos -725
+  ypos 688
+ }
+set Ne39b4800 [stack 0]
+ Input {
+  inputs 0
+  name Input
+  xpos -531
+  ypos 206
+ }
+ Dot {
+  name Dot1
+  xpos -497
+  ypos 258
+ }
+ Reformat {
+  type "to box"
+  box_width {{width+parent.overscan.w}}
+  box_height {{height+parent.overscan.h}}
+  box_fixed true
+  box_pixel_aspect {{pixel_aspect}}
+  resize none
+  name Reformat1
+  xpos -531
+  ypos 326
+ }
+ NoTimeBlur {
+  rounding floor
+  name NoTimeBlur1
+  xpos -531
+  ypos 398
+ }
+ Crop {
+  box {{floor(((x*parent.slices_h)%1*(parent.slices_w))/parent.slices_w*parent.slices_w)/parent.slices_w*width-parent.overlap.w} {floor(x%1*(parent.slices_h))/parent.slices_h*height-parent.overlap.h} {floor(((x*parent.slices_h)%1*(parent.slices_w))/parent.slices_w*parent.slices_w)/parent.slices_w*width+width/parent.slices_w+parent.overlap.w} {floor(x%1*(parent.slices_h))/parent.slices_h*height+height/parent.slices_h+parent.overlap.h}}
+  softness {{parent.overlap} {parent.overlap}}
+  intersect true
+  name Crop1
+  xpos -531
+  ypos 518
+  addUserKnob {20 User}
+  addUserKnob {12 center}
+  center {{(box.x+box.r)/2} {(box.y+box.t)/2}}
+  addUserKnob {12 center_normalised l "normalised center"}
+  center_normalised {{(center-width/2)/width*2} {(center-height/2)/(width*pixel_aspect)*2}}
+  addUserKnob {7 distance_normalised l "normalised distance"}
+  distance_normalised {{hypot(Crop1.center.x-parent.center.x,Crop1.center.y-parent.center.y)/hypot(parent.width/2,parent.height/2)}}
+ }
+set N7e2a5c00 [stack 0]
+ Convolve2 {
+  inputs 2
+  filter_channel none
+  use_input_channels true
+  name Convolve2
+  xpos -531
+  ypos 682
+ }
+set Nb68f5800 [stack 0]
+ TimeBlur {
+  divisions {{parent.slices_w*parent.slices_h}}
+  shutter {{divisions/(divisions+1)}}
+  shuttercustomoffset {{(1/(divisions+1))}}
+  name TimeBlur2
+  xpos -531
+  ypos 734
+ }
+ Unpremult {
+  name Unpremult1
+  xpos -531
+  ypos 767
+ }
+ Crop {
+  box {0 0 {width} {height}}
+  name Crop2
+  xpos -531
+  ypos 797
+ }
+ Reformat {
+  type "to box"
+  box_width {{Dot1.width}}
+  box_height {{Dot1.height}}
+  box_fixed true
+  box_pixel_aspect {{Dot1.pixel_aspect}}
+  resize none
+  pbb true
+  name Reformat3
+  xpos -531
+  ypos 845
+ }
+ Output {
+  name Output1
+  xpos -531
+  ypos 878
+ }
+push $N7da0cc00
+ TimeWarp {
+  lookup 0.05
+  time ""
+  filter none
+  name TimeWarp1
+  xpos -339
+  ypos 660
+ }
+ NoOp {
+  inputs 0
+  name NoOp1
+  xpos -882
+  ypos 533
+  addUserKnob {20 User}
+  addUserKnob {7 double}
+  double {{parent.orientation}}
+  addUserKnob {7 double_1}
+  double_1 {{1-parent.orientation}}
+  addUserKnob {7 double_2}
+  double_2 {{double*double_1}}
+  addUserKnob {7 double_3}
+  double_3 {{hypot(double_2,parent.scale.w)}}
+  addUserKnob {7 double_4}
+  double_4 {{double/double_3}}
+  addUserKnob {7 double_5}
+  double_5 {{double_1/double_3}}
+  addUserKnob {7 double_6}
+  double_6 {{double_4*double_5}}
+ }
+push $Ne39b4800
+push $N7e2a5c00
+ AddChannels {
+  channels depth
+  color 1
+  name AddChannels1
+  xpos -474
+  ypos 584
+ }
+ ZDefocus2 {
+  inputs 2
+  useGPUIfAvailable false
+  math direct
+  size 52
+  max_size 100
+  filter_type image
+  legacy_resize_mode false
+  show_legacy_resize_mode false
+  name ZDefocus1
+  xpos -436
+  ypos 650
+ }
+push $Nb68f5800
+ Viewer {
+  frame 19
+  frame_range 100-100
+  center_fstop -1
+  name Viewer1
+  xpos -312
+  ypos 758
+ }
+end_group
+Grade {
+ gamma 2
+ name Grade3
+ selected true
+ xpos -1360
+ ypos 38
+}
