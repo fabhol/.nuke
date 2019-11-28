@@ -1,0 +1,357 @@
+set cut_paste_input [stack 0]
+version 11.3 v4
+Group {
+ inputs 0
+ name RenderRead39
+ help "Reads a multipass render. Once named \"HandoverReader\", this node reads a \"rendering handover asset\".\n\nThe rendering handover asset is usually contains a collection of image sequences (e.g a 3D render with various AOV's), the render camera, and some metadata.\n\nThese AOV's will be read and merged into the output pipe, ready to be Shuffle'd out.\n\nThere is also a button to get an expression linked copy of the camera, and various other useful buttons"
+ onCreate "import nukeBuckets.handover_reader\nnukeBuckets.handover_reader.on_create(node = nuke.thisNode())"
+ knobChanged "import nukeBuckets.handover_reader\nnukeBuckets.handover_reader.knob_changed(node = nuke.thisNode(), knob=nuke.thisKnob())"
+ label "\[value status]\n\[lindex \[file split \[value file]] 4]\n\[lindex \[file split \[value file]] 6]\n\[lindex \[file split \[value file]] 8]"
+ selected true
+ xpos -645
+ ypos -24742
+ postage_stamp true
+ addUserKnob {20 HandoverReaderTab l RenderRead}
+ addUserKnob {2 file}
+ file /asset/elixir2/pts/pts6240/rendering/lgt-env-watersurface001-beauty/handover/v042
+ addUserKnob {22 reread t "Loads the contents of the handover asset.\n\nRecreates the internals of the node" -STARTLINE T "import nukeBuckets.handover_reader\nreload(nukeBuckets.handover_reader)\nnukeBuckets.handover_reader.populate_handover_internals(node = nuke.thisNode())\n"}
+ addUserKnob {3 first l "frame range" t "The first frame of the beauty AOV.\n\nRead only. Displayed for convenience."}
+ first 1028
+ addUserKnob {4 before l "" t "What internal Read nodes will do for frame numbers before first" -STARTLINE M {hold loop bounce black "" "" ""}}
+ addUserKnob {3 last l "" t "The first frame of the beauty AOV.\n\nRead only. Displayed for convenience." -STARTLINE}
+ last 1090
+ addUserKnob {4 after l "" t "What internal Read nodes will do for frame numbers after last" -STARTLINE M {hold loop bounce black "" ""}}
+ addUserKnob {4 on_error l "missing frames" t "What the internal Read nodes will do when the file cannot be opened\n\nBest default is \"error\". Others are useful for \"every 10 frames\" renders." M {error black checkerboard "nearest frame" ""}}
+ on_error "nearest frame"
+ addUserKnob {22 missing_frames_reload l "reload Read nodes" t "Call childrens reload. Re-Read the image from the disk." -STARTLINE T "import nukeBuckets.handover_reader\nreload(nukeBuckets.handover_reader)\nnukeBuckets.handover_reader.reload_all_child_read_nodes(nuke.thisNode())\n"}
+ addUserKnob {4 mode M {default "only beauty" deep}}
+ addUserKnob {6 beauty_bbox l "use beauty bbox" -STARTLINE}
+ beauty_bbox true
+ addUserKnob {1 status l INVISIBLE t "Used in node label" +INVISIBLE}
+ status "(1 of 37 AOVs)"
+ addUserKnob {26 ""}
+ addUserKnob {22 version_latest l "<img src=\":qrc/images/arrow_up.png\" width=16> latest publish" t "Update to latest published version." -STARTLINE T "import nukeBuckets.handover_reader\nreload(nukeBuckets.handover_reader)\nnukeBuckets.handover_reader.node_latest_published_version(node = nuke.thisNode())\n"}
+ addUserKnob {22 extract_cam l "<img src=\":qrc/images/Camera.png\" width=16> get camera " t "Loads the camera used to produce this render." -STARTLINE T "import nukeBuckets.handover_reader\nreload(nukeBuckets.handover_reader)\nnukeBuckets.handover_reader.node_get_camera(node = nuke.thisNode())\n"}
+ addUserKnob {22 shotgun_reveal l "<img src=\":qrc/images/Proxy.png\" width=16> view in shotgun " t "Open the Shotgun \"Publish Event\" page for this handover" -STARTLINE T "import nukeBuckets.handover_reader\nreload(nukeBuckets.handover_reader)\nnukeBuckets.handover_reader.node_reveal_in_shotgun(node = nuke.thisNode())\n"}
+ addUserKnob {22 contents_list l "<img src=\":qrc/images/GroupShow.png\" width=16> list contents  " t "Show list of what is contained within in this handover asset" T "import nukeBuckets.handover_reader\nreload(nukeBuckets.handover_reader)\nnukeBuckets.handover_reader.node_contents_list(node = nuke.thisNode())\n" +STARTLINE}
+ addUserKnob {22 shuffle_layers l "<img src=\":qrc/images/ToolbarChannel.png\" width=16> Shuffle layers" t "Shuffle out layers contained within this handover" -STARTLINE T "import nukeBuckets.handover_reader\nreload(nukeBuckets.handover_reader)\nnukeBuckets.handover_reader.node_shuffle_layers(node = nuke.thisNode())\n"}
+ addUserKnob {22 extract_beauty l "<img src=\":qrc/images/View.png\" width=16> extract beauty" t "Create a standalone Read node for the beauty pass" -STARTLINE T "import nukeBuckets.handover_reader\nreload(nukeBuckets.handover_reader)\nnukeBuckets.handover_reader.extract_beauty_pass(inputNode=nuke.thisNode())"}
+ addUserKnob {20 handover_aovs_tab l AOV's}
+ addUserKnob {26 label_aov_sets l "AOV sets" T " "}
+ addUserKnob {22 aov_preset_none l "only beauty" -STARTLINE}
+ addUserKnob {22 aov_preset_all_rsp l "toggle all" -STARTLINE}
+ addUserKnob {22 aov_preset_denoise l "toggle denoise" -STARTLINE}
+ addUserKnob {20 aov_group_start l "Available AOVs" n 2}
+ addUserKnob {6 pause_internal_rebuilds l "pause internal rebuilds" -STARTLINE +HIDDEN}
+ addUserKnob {26 grp_label_data l group: T data}
+ addUserKnob {6 aov_enable_A l A +STARTLINE}
+ addUserKnob {6 aov_enable_motionvector l motionvector +STARTLINE}
+ addUserKnob {6 aov_enable_N l N +STARTLINE}
+ addUserKnob {6 aov_enable_N_filt l N_filt +STARTLINE}
+ addUserKnob {6 aov_enable_P l P +STARTLINE}
+ addUserKnob {6 aov_enable_Pref l Pref +STARTLINE}
+ addUserKnob {6 aov_enable_Pref_filt l Pref_filt +STARTLINE}
+ addUserKnob {6 aov_enable_P_filt l P_filt +STARTLINE}
+ addUserKnob {6 aov_enable_uvmap l uvmap +STARTLINE}
+ aov_enable_uvmap true
+ addUserKnob {6 aov_enable_Z l Z +STARTLINE}
+ addUserKnob {6 aov_enable_Z_filt l Z_filt +STARTLINE}
+ addUserKnob {22 aov_toggle_data l "toggle all 'data'" +STARTLINE}
+ addUserKnob {26 spacer l " " T " "}
+ addUserKnob {26 grp_label_id l group: T id}
+ addUserKnob {6 aov_enable_crypto_asset l crypto_asset +STARTLINE}
+ addUserKnob {6 aov_enable_crypto_assetpath l crypto_assetpath +STARTLINE}
+ addUserKnob {6 aov_enable_crypto_instance l crypto_instance +STARTLINE}
+ addUserKnob {6 aov_enable_crypto_material l crypto_material +STARTLINE}
+ addUserKnob {6 aov_enable_crypto_object l crypto_object +STARTLINE}
+ addUserKnob {6 aov_enable_id_1 l id_1 +STARTLINE}
+ addUserKnob {6 aov_enable_id_2 l id_2 +STARTLINE}
+ addUserKnob {6 aov_enable_id_3 l id_3 +STARTLINE}
+ addUserKnob {6 aov_enable_id_4 l id_4 +STARTLINE}
+ addUserKnob {6 aov_enable_id_5 l id_5 +STARTLINE}
+ addUserKnob {6 aov_enable_id_6 l id_6 +STARTLINE}
+ addUserKnob {6 aov_enable_id_7 l id_7 +STARTLINE}
+ addUserKnob {6 aov_enable_id_8 l id_8 +STARTLINE}
+ addUserKnob {22 aov_toggle_id l "toggle all 'id'" +STARTLINE}
+ addUserKnob {26 spacer_1 l " " T " "}
+ addUserKnob {26 grp_label_illumination l group: T illumination}
+ addUserKnob {6 aov_enable_coat l coat +STARTLINE}
+ addUserKnob {6 aov_enable_diffuse_albedo l diffuse_albedo +STARTLINE}
+ addUserKnob {6 aov_enable_diffuse_direct l diffuse_direct +STARTLINE}
+ addUserKnob {6 aov_enable_diffuse_indirect l diffuse_indirect +STARTLINE}
+ addUserKnob {6 aov_enable_emission l emission +STARTLINE}
+ addUserKnob {6 aov_enable_specular_direct l specular_direct +STARTLINE}
+ addUserKnob {6 aov_enable_specular_indirect l specular_indirect +STARTLINE}
+ addUserKnob {6 aov_enable_sss l sss +STARTLINE}
+ addUserKnob {6 aov_enable_transmission l transmission +STARTLINE}
+ addUserKnob {22 aov_toggle_illumination l "toggle all 'illumination'" +STARTLINE}
+ addUserKnob {26 spacer_2 l " " T " "}
+ addUserKnob {26 grp_label_light_group l group: T "light group"}
+ addUserKnob {6 aov_enable_light_group_default l light_group_default +STARTLINE}
+ addUserKnob {6 aov_enable_light_group_1 l light_group_1 +STARTLINE}
+ addUserKnob {6 aov_enable_light_group_3 l light_group_3 +STARTLINE}
+ addUserKnob {6 aov_enable_light_group_4 l light_group_4 +STARTLINE}
+ addUserKnob {22 aov_toggle_light_group l "toggle all 'light group'" +STARTLINE}
+ addUserKnob {26 spacer_3 l " " T " "}
+ addUserKnob {26 _aov_group_spacer l "" +STARTLINE}
+ addUserKnob {20 aov_group_end l "" -STARTLINE n -1}
+}
+ Read {
+  inputs 0
+  file_type exr
+  file /asset/elixir2/pts/pts6240/rendering/lgt-env-watersurface001-beauty/uvmap/1136x952_exr/v042/pts6240_lgt-env-watersurface001-beauty_uvmap_v042.%04d.exr
+  format "1136 952 0 0 1136 952 2 elixir2_proxy"
+  first 1028
+  last 1090
+  origfirst 1028
+  origlast 1090
+  origset true
+  on_error "nearest frame"
+  name Read2
+  xpos 25
+  ypos -136
+  postage_stamp false
+ }
+add_layer {uvmap uvmap.red uvmap.green uvmap.blue}
+ Shuffle {
+  out uvmap
+  name Shuffle1
+  label "\[value in]->\[value out]"
+  xpos 25
+  ypos -61
+ }
+ Remove {
+  channels rgba
+  name Remove1
+  xpos 25
+  ypos 14
+ }
+ Read {
+  inputs 0
+  file_type exr
+  file /asset/elixir2/pts/pts6240/rendering/lgt-env-watersurface001-beauty/lgt-env-watersurface001-beauty/1136x952_exr/v042/pts6240_lgt-env-watersurface001-beauty_lgt-env-watersurface001-beauty_v042.####.exr
+  format "1136 952 0 0 1136 952 2 elixir2_proxy"
+  first 1028
+  last 1090
+  origfirst 1028
+  origlast 1090
+  origset true
+  on_error "nearest frame"
+  name Read1
+  xpos -125
+  ypos 164
+ }
+ Copy {
+  inputs 2
+  channels uvmap
+  bbox B
+  name Copy1
+  xpos 25
+  ypos 164
+ }
+ Output {
+  name Output1
+  xpos 25
+  ypos 190
+ }
+ StickyNote {
+  inputs 0
+  name StickyNote1
+  tile_color 0xff
+  label "Unwise to manually edit.\nContents are deleted on reread."
+  note_font_size 64
+  note_font_color 0xff0000ff
+  xpos 0
+  ypos -336
+ }
+end_group
+set N1570ce60 [stack 0]
+Marcie2 {
+ inputs 0
+ name Marcie2_1
+ selected true
+ xpos -480
+ ypos -24754
+ raw false
+ cspace_grp 0
+}
+Shuffle {
+ alpha white
+ name Shuffle19
+ selected true
+ xpos -480
+ ypos -24708
+}
+Group {
+ inputs 2
+ name UVtoST
+ selected true
+ xpos -480
+ ypos -24567
+ addUserKnob {20 User}
+ addUserKnob {4 output M {texture STMap}}
+ addUserKnob {26 divider_1 l " "}
+ addUserKnob {41 in l "UV layer" T Shuffle9.in}
+ addUserKnob {41 add l center T Grade11.add}
+ addUserKnob {14 size_wh l scale R 0 100}
+ size_wh {1 1}
+ addUserKnob {41 rotate T ColorMatrix1.rotate}
+ addUserKnob {41 size_1 l "close holes" T Blur8.size}
+ addUserKnob {41 size l blur T Blur7.size}
+ addUserKnob {41 filter T STMap1.filter}
+ addUserKnob {6 black_outside l "black outside" -STARTLINE}
+ black_outside true
+ addUserKnob {26 spacer l " "}
+ addUserKnob {26 text l " " T "1. choose UV layer\n2. pick desired center value (hold Ctrl + Alt)\n\nif needed:\n3. scale/rotate\n4. blur map to get rid of sampling artifacts\n5. close holes to prevent ugly edges (uvmap needs to be\nunpremulted for this to work)"}
+ addUserKnob {20 Info_tab l Info}
+ addUserKnob {26 dasname l "" +STARTLINE T "<font size='5'>UVtoST</font> v0.5<br><br>Either creates a new STMap from the supplied UVMap<br>centered around the picked value, or applies the new<br>STMap directly to the texture."}
+ addUserKnob {26 divider l "" +STARTLINE}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2019-07-23\n"}
+ addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
+ addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
+}
+ Input {
+  inputs 0
+  name UV
+  xpos -590
+  ypos -639
+  number 1
+ }
+ Shuffle {
+  in uvmap
+  name Shuffle9
+  xpos -590
+  ypos -562
+ }
+ Expression {
+  expr3 "r!=0 && g != 0"
+  name Expression1
+  xpos -590
+  ypos -514
+ }
+set N1bc89950 [stack 0]
+ Dot {
+  name Dot3
+  xpos -446
+  ypos -510
+ }
+ Blur {
+  size 3.2
+  name Blur8
+  xpos -480
+  ypos -447
+ }
+ Unpremult {
+  name Unpremult11
+  xpos -480
+  ypos -394
+ }
+ Dot {
+  name Dot2
+  xpos -446
+  ypos -342
+ }
+push $N1bc89950
+ Merge2 {
+  inputs 2
+  operation under
+  name Merge24
+  xpos -590
+  ypos -346
+ }
+ Blur {
+  size 3
+  name Blur7
+  xpos -590
+  ypos -303
+ }
+ Grade {
+  channels {rgba.red rgba.green -rgba.blue none}
+  add {0.6613712907 5.201663971 0 1}
+  reverse true
+  black_clamp false
+  name Grade11
+  xpos -590
+  ypos -250
+ }
+ ColorMatrix {
+  matrix {
+      {{cos(radians(rotate))} {-sin(radians(rotate))} 0}
+      {{sin(radians(rotate))} {cos(radians(rotate))} 0}
+      {0 0 1}
+    }
+  name ColorMatrix1
+  label "Rotate vectors"
+  xpos -590
+  ypos -207
+  addUserKnob {20 User}
+  addUserKnob {7 rotate R -180 180}
+  rotate 95
+ }
+ Multiply {
+  value {{1/parent.size_wh.w} {1/parent.size_wh.h} 1 1}
+  name Multiply5
+  xpos -590
+  ypos -159
+ }
+ Grade {
+  channels {rgba.red rgba.green -rgba.blue none}
+  add 0.5
+  black_clamp false
+  name Grade12
+  xpos -590
+  ypos -106
+ }
+ Dot {
+  name Dot1
+  xpos -556
+  ypos -30
+ }
+set N1c19e880 [stack 0]
+ Dot {
+  name Dot4
+  xpos -556
+  ypos 90
+ }
+push $N1c19e880
+ Input {
+  inputs 0
+  name texture
+  xpos -810
+  ypos -639
+ }
+ BlackOutside {
+  name BlackOutside1
+  selected true
+  xpos -810
+  ypos -202
+  disable {{!parent.black_outside}}
+ }
+ STMap {
+  inputs 2
+  uv rgb
+  name STMap1
+  xpos -810
+  ypos -39
+ }
+ Switch {
+  inputs 2
+  which {{parent.output}}
+  name Switch1
+  xpos -810
+  ypos 86
+ }
+ Output {
+  name Output1
+  xpos -810
+  ypos 158
+ }
+end_group
+push $N1570ce60
+Merge2 {
+ inputs 2
+ name Merge29
+ selected true
+ xpos -645
+ ypos -24466
+}
