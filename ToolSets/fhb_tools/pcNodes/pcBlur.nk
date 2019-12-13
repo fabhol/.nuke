@@ -71,7 +71,7 @@ set N90a6dd0 [stack 0]
   channel0 none
   channel1 none
   channel2 none
-  expr3 (1-clamp(floor((x+resx/2)%resx)))*(1-clamp(floor((y+resy/2)%resy)))*300
+  expr3 (1-clamp(floor((x+resx/2)%resx)))*(1-clamp(floor((y+resy/2)%resy)))*10
   name Expression3
   xpos -1030
   ypos -202
