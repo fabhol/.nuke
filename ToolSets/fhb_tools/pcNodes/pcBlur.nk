@@ -2,8 +2,7 @@ Group {
  name pcBlur
  tile_color 0x7f7f7fff
  addUserKnob {20 DirBlurTab l DirBlur}
- addUserKnob {4 output l mode t "Choose the layers that you want to affect.\n\nRGB: Only affects the RGB layer\n\nRGB + pc_alpha: Affects RGB and the per channel alpha layer. Select this mode, if you want to merge the result over a background.\n\npc_alpha: Only affect the per channel alpha layer. Select this mode if your RGB channels already have chromatic aberration (for example objects from the plate), and you want to merge them on top of a background.\nIn this case the RGB layer should not be premultiplied yet. Tick the 'premult RGB' check box in the pcMerge instead." M {RGB "RGB + pc_alpha" pc_alpha}}
- addUserKnob {41 alpha_operation l " alpha" t "There is no way of retaining a correct alpha channel after seperately processing the RGB channels. This lets you generate a new alpha based on the pc_alpha layer.\n\n<b>original</b>: the original alpha is piped through\n<b>average</b>/<b>max</b>/<b>min</b>: average/max/min of the three pc_alpha channels\n<b>luminance</b>: luminance of the pc_alpha using the Rec. 709 luma coefficients" -STARTLINE T GenerateAlpha.operation}
+ addUserKnob {4 output l mode t "Choose the layers that you want to affect.\n\nRGB: Only affects the RGB layer\n\nRGB + pc_alpha: Affects RGB and the per channel alpha layer. Select this mode, if you want to merge the result over a background. This only works with a pcMerge.\n\npc_alpha: Only affect the per channel alpha layer. Select this mode if your RGB channels already have chromatic aberration (for example objects from the plate), and you want to merge them on top of a background with a pcMerge.\nIn this case the RGB layer should not be premultiplied yet. Tick the 'premult RGB' check box in the pcMerge instead." M {RGB "RGB + pc_alpha" pc_alpha ""}} addUserKnob {41 alpha_operation l " alpha" t "There is no way of retaining a correct alpha channel after seperately processing the RGB channels. This lets you generate a new alpha based on the pc_alpha layer.\n\n<b>original</b>: the original alpha is piped through\n<b>average</b>/<b>max</b>/<b>min</b>: average/max/min of the three pc_alpha channels\n<b>luminance</b>: luminance of the pc_alpha using the Rec. 709 luma coefficients" -STARTLINE T GenerateAlpha.operation}
  addUserKnob {6 show_vectors l "show vectors" t "Overlays vectors over the image to better show the effect." +STARTLINE}
  addUserKnob {3 res -STARTLINE}
  res 20
@@ -21,10 +20,10 @@ Group {
  addUserKnob {41 fringe -STARTLINE T Dissolve1.fringe}
  addUserKnob {41 mix T Dissolve1.which}
  addUserKnob {20 Info_tab l Info}
- addUserKnob {26 dasname l "" +STARTLINE T "per channel<br><font size='5'>Blur</font> v1.02<br>"}
+ addUserKnob {26 dasname l "" +STARTLINE T "per channel<br><font size='5'>Blur</font> v1.03<br>"}
  addUserKnob {26 what l "" +STARTLINE T "pcBlur is part of the pc toolset, a collection of nodes that offer the pos-\nsibility to affect the channels seperately. Chain them up in any way to\nachieve the desired effect.\n\nAn optional per channel alpha layer (pc_alpha) can be created to cor-\nrectly merge the result over a background. In this case it's necessary\nto use the pcMerge instead of a regular Merge."}
  addUserKnob {26 divider l "" +STARTLINE}
- addUserKnob {26 info l "" +STARTLINE T "Last change: 2019-09-09"}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2019-12-14"}
  addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
  addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
 }
