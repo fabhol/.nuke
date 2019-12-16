@@ -4,13 +4,13 @@ Group {
  knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\n\ndef copy_values():\n    scale = node\['scale'].value()\n    list = \[scale\[0],scale\[1],scale\[2],0]    \n    offset = node\['offset'].value()\n    new_curve = 'curve \{curve l x0.25 %s x0.5 %s x0.75 %s\}' % (list\[0]+offset, list\[1]+offset, list\[2]+offset)\n    with node:\n        nuke.toNode('TimeDissolve')\['lut'].fromScript(new_curve)\n\nif knob.name() in \['scale', 'offset']:\n    copy_values()\n\nif knob.name() == 'helper':\n    if knob.value() is True:\n        copy_values()\n        node\['scale'].setEnabled(True)\n        node\['offset'].setEnabled(True)"
  tile_color 0x7f7f7fff
  addUserKnob {20 FaberrationTab l Faberration}
- addUserKnob {4 output l mode t "Choose the layers that you want to affect.\n\nRGB: Only affects the RGB layer\n\nRGB + pc_alpha: Affects RGB and the per channel alpha layer. Select this mode, if you want to merge the result over a background.\n\npc_alpha: Only affect the per channel alpha layer. Select this mode if your RGB channels already have chromatic aberration (for example objects from the plate), and you want to merge them on top of a background.\nIn this case the RGB layer should not be premultiplied yet. Tick the 'premult RGB' check box in the pcMerge instead." M {RGB "RGB + pc_alpha" pc_alpha}}
+ addUserKnob {4 output l mode t "Choose the layers that you want to affect.\n\nRGB: Only affects the RGB layer\n\nRGB + pc_alpha: Affects RGB and the per channel alpha layer. Select this mode, if you want to merge the result over a background. This only works with a pcMerge.\n\npc_alpha: Only affect the per channel alpha layer. Select this mode if your RGB channels already have chromatic aberration (for example objects from the plate), and you want to merge them on top of a background with a pcMerge.\nIn this case the RGB layer should not be premultiplied yet. Tick the 'premult RGB' check box in the pcMerge instead." M {RGB "RGB + pc_alpha" pc_alpha "" "" ""}}
  addUserKnob {41 alpha_operation l " alpha" t "There is no way of retaining a correct alpha channel after seperately processing the RGB channels. This lets you generate a new alpha based on the pc_alpha layer.\n\n<b>original</b>: the original alpha is piped through\n<b>average</b>/<b>max</b>/<b>min</b>: average/max/min of the three pc_alpha channels\n<b>luminance</b>: luminance of the pc_alpha using the Rec. 709 luma coefficients" -STARTLINE T GenerateAlpha.operation}
  addUserKnob {6 show_vectors l "show vectors" t "Overlays vectors over the image to better show the effect." +STARTLINE}
  addUserKnob {3 res -STARTLINE}
  res 20
  addUserKnob {26 divider01 l " "}
- addUserKnob {18 samples l samples* t "How often the curve gets subsampled for each channel. Carefully increase the value per channel until there are no visible steps anymore.\n\nThe amount of samples directly influences the speed of this node." R 1 10}
+ addUserKnob {18 samples l samples* t "How often the curve gets subsampled for each channel. Carefully increase the value per channel until there are no visible steps anymore.\n\n*The amount of samples directly influences the speed of this node." R 1 10}
  samples {1 1 1}
  addUserKnob {26 spacer l " " T " "}
  addUserKnob {18 scale t "Controls the curve on the basis of the scale of each channel. Look at the curve below to see how the values affect it.\nFor the initial setting you can try to pick the chromatic aberration of the plate by dragging the sample area over a high contrast aberrated edge. Then adjust until it matches the plate." R -1 1}
@@ -19,15 +19,17 @@ Group {
  addUserKnob {6 helper t "checker to indicate whether the rgb control knobs are disabled or not" +INVISIBLE +STARTLINE}
  helper true
  addUserKnob {20 curve n 1}
+ curve 0
  addUserKnob {41 lut l "" +STARTLINE T TimeDissolve.lut}
  addUserKnob {22 reset l "reset curve to rgb values" T "node = nuke.thisNode()\nnode\['helper'].setValue(True)" +STARTLINE}
- addUserKnob {22 whatsthis l "What am I looking at?" -STARTLINE T "nuke.message(\"\"\"The x-axis represents the visible color spectrum (in the order red-green-blue), the y-axis represents the focus error. \n\nThe primary colours have their highest intensity at the folowing x-values:\n\nred: x=0.25\ngreen: x=0.5\nblue: x=0.75\n\nwith mixed colors in between.\"\"\")"}
+ addUserKnob {22 whatsthis l "What am I looking at?" -STARTLINE T "nuke.message(\"\"\"The x-axis represents the visible color spectrum (between 0 and 1, in the order red-green-blue), the y-axis represents the focus error. \n\nThe primary colours have a spread of 0.5, with their highest intensities being at the folowing x-values:\n\nred: x=0.25\ngreen: x=0.5\nblue: x=0.75\n\nwith mixed colors in between.\"\"\")"}
  addUserKnob {26 divider02 l " "}
  addUserKnob {20 endGroup n -1}
- addUserKnob {7 weighting l weighting* t "Controls the falloff of the effect from the center to the corners.\n\nAny value other than 1 will reduce the speed of this node significantly." R 0 5}
+ addUserKnob {7 weighting l weighting* t "Controls the falloff of the effect from the center to the corners.\n\n*Any value other than 1 causes an internal switch from Transform to STMap, which reduces the speed significantly." R 0 5}
  weighting 1
- addUserKnob {14 multiply l multiply* t "Multiply of the effect. Changing w and h seperately will not change the direction of the effect but the amount, depending on the influence that w/h has on it.\n\nSetting w and h to different values will reduce the speed of this node significantly." R 0 10}
+ addUserKnob {14 multiply t "Multiply of the effect." R 0 10}
  multiply 1
+ addUserKnob {7 direction l direction* t "*Any value other than 0 causes an internal switch from Transform to STMap, which reduces the speed significantly." -STARTLINE}
  addUserKnob {12 center t "Center of the effect."}
  center {{width/2+.5} {height/2+.5}}
  addUserKnob {22 link_center l "link to format center" -STARTLINE +HIDDEN T "node = nuke.thisNode()\nnode\['center'].setExpression('width/2+.5',0)\nnode\['center'].setExpression('height/2+.5',1)\nnode\['link_center'].setVisible(False)\nnode\['release_center'].setVisible(True)"}
@@ -36,7 +38,7 @@ Group {
  addUserKnob {41 filter T STMap.filter}
  addUserKnob {6 black_outside l "black outside" -STARTLINE}
  addUserKnob {26 divider03 l " "}
- addUserKnob {41 effect_mask l "effect mask*" t "The effect will be multiplied with the selected channel. Values above 1 will increase the effect, values below 1 decrease it.\n\n*Using the effect mask will reduce the speed of this node significantly." T Copy5.from0}
+ addUserKnob {41 effect_mask l "effect mask*" t "The effect will be multiplied with the selected channel. Values above 1 will increase the effect, values below 1 decrease it.\n\n*Using the effect mask causes an internal switch from Transform to STMap, which reduces the speed significantly." T Copy5.from0}
  addUserKnob {6 invert_effect_mask l invert -STARTLINE}
  addUserKnob {41 maskChannelMask l mask T Dissolve.maskChannelMask}
  addUserKnob {41 inject -STARTLINE T Dissolve.inject}
@@ -46,21 +48,13 @@ Group {
  addUserKnob {26 text_1 l "" +STARTLINE}
  addUserKnob {26 text l "" +STARTLINE T "* Changing these values can reduce the speed significantly. Read the tooltip."}
  addUserKnob {20 Info_tab l Info}
- addUserKnob {26 dasname l "" +STARTLINE T "per channel<br><font size='5'>Faberration</font> v1.02<br>"}
- addUserKnob {26 what l "" +STARTLINE T "pcFaberration creates a realistic (lateral) chromatic aberration effect.\nIt's driven by a curve that describes the focus error of a color depen-\nding on its position in the visible colour spectrum.\n\nIt is part of the pc toolset, a collection of nodes that offer the possi-\nbility to affect the channels seperately. Chain them up in any way to\nachieve the desired effect.\n\nAn optional per channel alpha layer (pc_alpha) can be created to cor-\nrectly merge the result over a background. In this case it's necessary\nto use the pcMerge instead of a regular Merge."}
+ addUserKnob {26 dasname l "" +STARTLINE T "per channel<br><font size='5'>Faberration</font> v1.03<br>"}
+ addUserKnob {26 what l "" +STARTLINE T "pcFaberration creates a realistic (lateral) chromatic aberration effect.\nIt's driven by a curve that describes the focus error of a color depen-\nding on its position in the visible colour spectrum.\n\nIt is part of the pc toolset, a collection of nodes that offer the possi-\nbility to affect the channels separately. Chain them up in any way to\nachieve the desired effect.\n\nAn optional per channel alpha layer (pc_alpha) can be created to cor-\nrectly merge the result over a background. In this case it's necessary\nto use the pcMerge instead of a regular Merge."}
  addUserKnob {26 divider l "" +STARTLINE}
- addUserKnob {26 info l "" +STARTLINE T "Last change: 2019-09-09\n"}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2019-12-15\n"}
  addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
  addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
 }
- TimeDissolve {
-  inputs 0
-  lut {curve {curve l x0.25 -0.5 x0.5 0 0.5}}
-  name TimeDissolve
-  knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\nparent = nuke.thisParent()\n\nif knob.name() == 'lut':\n    if parent\['helper'].value() is True:\n        parent\['scale'].setFlag(nuke.DISABLED)\n        parent\['offset'].setFlag(nuke.DISABLED)\n        parent\['helper'].setValue(False)"
-  xpos -810
-  ypos 854
- }
  Input {
   inputs 0
   name mask
@@ -77,24 +71,24 @@ Group {
   inputs 0
   name Input
   xpos -1580
-  ypos -706
+  ypos -586
  }
  Dot {
   name Dot34
   xpos -1546
-  ypos -510
+  ypos -390
  }
-set N92e5d800 [stack 0]
+set N5e025c00 [stack 0]
  Dot {
   name Dot30
   xpos -886
-  ypos -510
+  ypos -390
  }
-set N92e5d400 [stack 0]
+set N5e025800 [stack 0]
  Dot {
   name Dot31
   xpos -776
-  ypos -510
+  ypos -390
  }
  Expression {
   temp_name0 resx
@@ -107,7 +101,7 @@ set N92e5d400 [stack 0]
   expr3 (1-clamp(floor((x+resx/2)%resx)))*(1-clamp(floor((y+resy/2)%resy)))*10
   name Expression3
   xpos -810
-  ypos -442
+  ypos -322
   addUserKnob {20 User}
   addUserKnob {3 res}
   res {{max(parent.res,1)}}
@@ -118,19 +112,19 @@ set N92e5d400 [stack 0]
   blue alpha
   name Shuffle4
   xpos -810
-  ypos -394
+  ypos -274
  }
  Dot {
   name Dot32
   xpos -776
-  ypos -342
+  ypos -222
  }
-push $N92e5d400
+push $N5e025800
  Merge2 {
   inputs 2
   name Merge3
   xpos -920
-  ypos -346
+  ypos -226
   disable {{!parent.show_vectors}}
  }
 add_layer {pc_alpha pc_alpha.red pc_alpha.green pc_alpha.blue}
@@ -141,7 +135,7 @@ add_layer {pc_alpha pc_alpha.red pc_alpha.green pc_alpha.blue}
   out pc_alpha
   name Shuffle1
   xpos -920
-  ypos -226
+  ypos -106
   disable {{"\[string first \"pc_alpha\" \[layers \[input this 0]]]>-1"}}
  }
  Remove {
@@ -150,40 +144,40 @@ add_layer {pc_alpha pc_alpha.red pc_alpha.green pc_alpha.blue}
   channels2 pc_alpha
   name Remove1
   xpos -920
-  ypos -130
+  ypos -10
  }
  Dot {
   name Dot23
   xpos -886
-  ypos -30
+  ypos 90
  }
-set N92e85400 [stack 0]
+set N5e04f800 [stack 0]
  Dot {
   name Dot37
   xpos -1216
-  ypos -30
+  ypos 90
  }
  Dot {
   name Dot29
   xpos -1216
   ypos 2442
  }
-set N92e84c00 [stack 0]
+set N5e04f000 [stack 0]
  Dot {
   name Dot28
   xpos -1216
   ypos 2514
  }
-set N92e84800 [stack 0]
+set N5e04ec00 [stack 0]
  Dot {
   name Dot33
   xpos -1216
   ypos 2586
  }
-set N92e84400 [stack 0]
-push $N92e84800
-push $N92e84c00
-push $N92e85400
+set N5e04e800 [stack 0]
+push $N5e04ec00
+push $N5e04f000
+push $N5e04f800
 add_layer {correct_values correct_values.red correct_values.green correct_values.blue correct_values.alpha}
  AddChannels {
   channels {correct_values.red correct_values.green correct_values.blue none}
@@ -191,30 +185,30 @@ add_layer {correct_values correct_values.red correct_values.green correct_values
   color 1
   name AddChannels1
   xpos -920
-  ypos 32
+  ypos 152
  }
  NoTimeBlur {
   rounding floor
   name NoTimeBlur1
   xpos -920
-  ypos 110
+  ypos 230
  }
  Multiply {
   value {{curve(x%1) L 0 x0.25 1 0} {curve(x%1) L x0.25 0 x0.5 1 0} {curve(x%1) L x0.5 0 x0.75 1 0} 0}
   name Multiply1
   xpos -920
-  ypos 176
+  ypos 296
  }
  Dot {
   name Dot13
   xpos -886
-  ypos 258
+  ypos 378
  }
-set N92ea3400 [stack 0]
+set N5e06b800 [stack 0]
  Dot {
   name Dot14
   xpos -1106
-  ypos 258
+  ypos 378
  }
  Dot {
   name Dot12
@@ -225,127 +219,125 @@ set N92ea3400 [stack 0]
   inputs 0
   name effect_mask
   xpos -260
-  ypos 326
+  ypos 446
   number 2
  }
  Dot {
   name Dot11
   xpos -226
-  ypos 426
+  ypos 546
  }
-set N92ea2400 [stack 0]
-push $N92ea2400
+set N5e06a800 [stack 0]
+push $N5e06a800
  Copy {
   inputs 2
   to0 rgba.red
+  from1 {{{from0}}}
+  to1 rgba.green
   name Copy5
   xpos -260
-  ypos 488
+  ypos 608
  }
  Invert {
   channels {rgba.red -rgba.green -rgba.blue none}
   name Invert1
   xpos -260
-  ypos 590
+  ypos 710
   disable {{!parent.invert_effect_mask}}
  }
  Dot {
   name Dot24
   xpos -226
-  ypos 786
+  ypos 810
  }
-push $N92ea3400
+push $N5e06b800
  Remove {
   operation keep
   channels rgb
   channels2 pc_alpha
   name Remove2
   xpos -920
-  ypos 326
+  ypos 446
  }
  Dot {
   name Dot18
   xpos -886
-  ypos 426
+  ypos 546
  }
-set N92ec1000 [stack 0]
+set N5e08b400 [stack 0]
  Dot {
   name Dot26
   xpos -666
-  ypos 426
+  ypos 546
  }
-set N92ec0c00 [stack 0]
+set N5e08b000 [stack 0]
  Dot {
   name Dot22
   xpos -446
-  ypos 426
+  ypos 546
  }
  Expression {
   temp_name0 center
   temp_expr0 parent.center
-  expr0 abs(1-abs(atan(x-center.x,(y-center.y)/pixel_aspect)/pi)*2)
-  expr1 hypot(x+.5-center.x,(y+.5-center.y)/pixel_aspect)/hypot(width/2,height/2/pixel_aspect)
+  expr0 hypot(x+.5-center.x,(y+.5-center.y)/pixel_aspect)/hypot(width/2,height/2/pixel_aspect)
+  expr1 abs(1-abs(atan(x-center.x,(y-center.y)/pixel_aspect)/pi)*2)
+  channel2 none
+  channel3 none
   name Expression2
   xpos -480
-  ypos 494
+  ypos 614
  }
  Expression {
   temp_name0 power
   temp_expr0 1/parent.weighting
-  expr0 g==0?0:1/g*pow(g,power)*(1-lerp(1-r,0,parent.multiply.w)-lerp(r,0,parent.multiply.h))
-  channel1 none
+  expr0 r==0?0:1/r*pow(r,power)
+  expr1 r==0?0:1/r*pow(r,power)*(1-lerp(1-g,0,parent.multiply.w)-lerp(g,0,parent.multiply.h))
   channel2 none
   channel3 none
   name Expression4
   xpos -480
-  ypos 590
- }
- Clamp {
-  channels alpha
-  minimum_enable false
-  maximum 10000000
-  name Clamp1
-  xpos -480
-  ypos 680
+  ypos 710
  }
  Merge2 {
   inputs 2
   operation multiply
-  Achannels {rgba.red -rgba.green -rgba.blue none}
-  Bchannels {rgba.red -rgba.green -rgba.blue none}
-  output {rgba.red -rgba.green -rgba.blue none}
+  Achannels {rgba.red rgba.green -rgba.blue none}
+  Bchannels {rgba.red rgba.green -rgba.blue none}
+  output {rgba.red rgba.green -rgba.blue none}
   name Merge5
   xpos -480
-  ypos 782
+  ypos 806
   disable {{"!\[exists parent.input2.name] || Copy5.from0==0"}}
  }
  NoTimeBlur {
   name NoTimeBlur2
   xpos -480
-  ypos 878
+  ypos 902
  }
  Expression {
   temp_name0 center
   temp_expr0 parent.center
   temp_name1 scale
   temp_expr1 detour.scale
-  expr0 ((x+.5-center.x)/(scale*r+1)+center.x)/width
-  expr1 ((y+.5-center.y)/(scale*r+1)+center.y)/height
+  temp_name2 multiply
+  temp_expr2 parent.multiply
+  expr0 ((x+.5-center.x)/(scale*lerp(multiply.w*r,g,parent.direction)+1)+center.x)/width
+  expr1 ((y+.5-center.y)/(scale*lerp(multiply.h*r,g,parent.direction)+1)+center.y)/height
   channel3 none
   name Expression1
   xpos -480
-  ypos 974
+  ypos 998
  }
  Dot {
   name Dot27
   xpos -446
   ypos 1098
  }
-push $N92ec0c00
+push $N5e08b000
  BlackOutside {
   name BlackOutside1
   xpos -700
-  ypos 974
+  ypos 998
   disable {{!parent.black_outside}}
  }
  STMap {
@@ -360,20 +352,20 @@ push $N92ec0c00
   xpos -666
   ypos 1290
  }
-push $N92ec1000
+push $N5e08b400
  Transform {
-  scale {{parent.detour.scale*parent.multiply+1}}
+  scale {{parent.detour.scale*parent.multiply.w+1} {parent.detour.scale*parent.multiply.h+1}}
   center {{parent.center} {parent.center}}
   filter {{STMap.filter}}
   black_outside {{parent.black_outside}}
   shutteroffset centred
   name Transform
   xpos -920
-  ypos 974
+  ypos 998
  }
  Switch {
   inputs 2
-  which {{"parent.weighting!=1 || parent.multiply.w != parent.multiply.h || Copy5.from0!=0"}}
+  which {{"parent.weighting!=1 || Copy5.from0!=0 || parent.multiply.w != parent.multiply.h && parent.direction!=0"}}
   name Switch2
   xpos -920
   ypos 1286
@@ -390,13 +382,13 @@ push $N92ec1000
   xpos -886
   ypos 1626
  }
-set N92f17000 [stack 0]
+set N5e0dd800 [stack 0]
  Dot {
   name Dot21
   xpos -776
   ypos 1626
  }
-set N92f16c00 [stack 0]
+set N5e0dd400 [stack 0]
  Dot {
   name Dot19
   xpos -666
@@ -425,7 +417,7 @@ set N92f16c00 [stack 0]
   xpos -666
   ypos 1962
  }
-push $N92f16c00
+push $N5e0dd400
  TimeWarp {
   lookup {{frame+.5}}
   time ""
@@ -449,7 +441,7 @@ push $N92f16c00
   xpos -776
   ypos 1866
  }
-push $N92f17000
+push $N5e0dd800
  TimeWarp {
   lookup {{frame+.25}}
   time ""
@@ -497,8 +489,8 @@ push $N92f17000
   xpos -886
   ypos 2058
  }
-set N92f63c00 [stack 0]
-push $N92f63c00
+set N5e0fe400 [stack 0]
+push $N5e0fe400
  Dot {
   name Dot17
   xpos -1106
@@ -571,17 +563,16 @@ push $N92f63c00
   xpos -886
   ypos 2898
  }
-set N92f8dc00 [stack 0]
+set N5e156400 [stack 0]
  Dot {
   name Dot8
   xpos -886
   ypos 2994
  }
-set N92f8d800 [stack 0]
+set N5e156000 [stack 0]
  Group {
   name GenerateAlpha
   tile_color 0x7f7f7fff
-  selected true
   xpos -920
   ypos 3086
   addUserKnob {20 GenerateAlpha_tab l GenerateAlpha}
@@ -599,7 +590,7 @@ set N92f8d800 [stack 0]
    xpos -6
    ypos 114
   }
-set N92f8d000 [stack 0]
+set N5e187800 [stack 0]
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 min(pc_alpha.red,pc_alpha.green,pc_alpha.blue)
@@ -610,7 +601,7 @@ set N92f8d000 [stack 0]
    xpos 180
    ypos 206
   }
-push $N92f8d000
+push $N5e187800
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 max(pc_alpha.red,pc_alpha.green,pc_alpha.blue)
@@ -621,7 +612,7 @@ push $N92f8d000
    xpos 70
    ypos 206
   }
-push $N92f8d000
+push $N5e187800
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 pc_alpha.red*0.2126+pc_alpha.green*0.7152+pc_alpha.blue*0.0722
@@ -632,7 +623,7 @@ push $N92f8d000
    xpos -40
    ypos 206
   }
-push $N92f8d000
+push $N5e187800
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 (pc_alpha.red+pc_alpha.green+pc_alpha.blue)/3
@@ -643,7 +634,7 @@ push $N92f8d000
    xpos -150
    ypos 206
   }
-push $N92f8d000
+push $N5e187800
   Dot {
    name Dot2
    xpos -226
@@ -662,15 +653,15 @@ push $N92f8d000
    ypos 398
   }
  end_group
-push $N92f8d800
-push $N92f8dc00
-push $N92e84400
+push $N5e156000
+push $N5e156400
+push $N5e04e800
  Dot {
   name Dot2
   xpos -1216
   ypos 2682
  }
-push $N92e5d800
+push $N5e025c00
  Copy {
   inputs 2
   channels pc_alpha
@@ -684,7 +675,7 @@ push $N92e5d800
   xpos -1546
   ypos 2802
  }
-set N92fc4800 [stack 0]
+set N5e1b7000 [stack 0]
  Dot {
   name Dot7
   xpos -1326
@@ -720,7 +711,7 @@ set N92fc4800 [stack 0]
   xpos -1326
   ypos 3210
  }
-push $N92fc4800
+push $N5e1b7000
  Dissolve {
   inputs 2+1
   which 1
@@ -732,6 +723,7 @@ push $N92fc4800
  }
  Output {
   name Output1
+  selected true
   xpos -1580
   ypos 3326
  }
@@ -743,5 +735,13 @@ push $N92fc4800
   addUserKnob {20 User}
   addUserKnob {7 scale R -10 10}
   scale {{TimeDissolve.lut(x%1)*(parent.invert?-1:1)/100}}
+ }
+ TimeDissolve {
+  inputs 0
+  lut {curve {curve l x0.25 -0.5 x0.5 0 0.5}}
+  name TimeDissolve
+  knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\nparent = nuke.thisParent()\n\nif knob.name() == 'lut':\n    if parent\['helper'].value() is True:\n        parent\['scale'].setFlag(nuke.DISABLED)\n        parent\['offset'].setFlag(nuke.DISABLED)\n        parent\['helper'].setValue(False)"
+  xpos -810
+  ypos 806
  }
 end_group
