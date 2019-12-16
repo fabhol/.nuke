@@ -7,7 +7,7 @@ Group {
  addUserKnob {22 link_center l "link to center" +HIDDEN T "node = nuke.thisNode()\nnode\['center'].setExpression('width/2+.5',0)\nnode\['center'].setExpression('height/2+.5',1)\nnode\['link_center'].setVisible(False)\nnode\['release_center'].setVisible(True)" +STARTLINE}
  addUserKnob {6 show_vectors l "show vectors" +STARTLINE}
  addUserKnob {3 res -STARTLINE}
- res 2
+ res 20
  addUserKnob {26 divider01 l " "}
  addUserKnob {18 scale R 0 10}
  scale {0 0 0}
@@ -433,7 +433,7 @@ push $Nec607400
  }
  TimeDissolve {
   inputs 0
-  lut {curve {curve L l 0 1}}
+  lut {curve {curve L 0 1}}
   name TimeDissolve1
   xpos -743
   ypos 14
