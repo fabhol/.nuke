@@ -2,12 +2,12 @@ Group {
  name pcZoomBlur
  tile_color 0x7f7f7fff
  addUserKnob {20 ZoomBlurTab l ZoomBlur}
- addUserKnob {4 output l mode M {RGB "RGB + pc_alpha" pc_alpha}}
- addUserKnob {41 alpha_operation l " alpha" -STARTLINE T GenerateAlpha.operation}
+ addUserKnob {4 output l mode t "Choose the layers that you want to affect.\n\nRGB: Only affects the RGB layer\n\nRGB + pc_alpha: Affects RGB and the per channel alpha layer. Select this mode, if you want to merge the result over a background. This only works with a pcMerge.\n\npc_alpha: Only affect the per channel alpha layer. Select this mode if your RGB channels already have chromatic aberration (for example objects from the plate), and you want to merge them on top of a background with a pcMerge.\nIn this case the RGB layer should not be premultiplied yet. Tick the 'premult RGB' check box in the pcMerge instead." M {RGB "RGB + pc_alpha" pc_alpha ""}}
+ addUserKnob {41 alpha_operation l " alpha" t "There is no way of retaining a correct alpha channel after seperately processing the RGB channels. This lets you generate a new alpha based on the pc_alpha layer.\n\n<b>original</b>: the original alpha is piped through\n<b>average</b>/<b>max</b>/<b>min</b>: average/max/min of the three pc_alpha channels\n<b>luminance</b>: luminance of the pc_alpha using the Rec. 709 luma coefficients" -STARTLINE T GenerateAlpha.operation}
  addUserKnob {22 link_center l "link to center" +HIDDEN T "node = nuke.thisNode()\nnode\['center'].setExpression('width/2+.5',0)\nnode\['center'].setExpression('height/2+.5',1)\nnode\['link_center'].setVisible(False)\nnode\['release_center'].setVisible(True)" +STARTLINE}
  addUserKnob {6 show_vectors l "show vectors" +STARTLINE}
  addUserKnob {3 res -STARTLINE}
- res 20
+ res 2
  addUserKnob {26 divider01 l " "}
  addUserKnob {18 scale R 0 10}
  scale {0 0 0}
@@ -20,8 +20,9 @@ Group {
  addUserKnob {6 curve l "use curve for weighting (slower but more flexible)" +STARTLINE}
  addUserKnob {41 lut l "" +STARTLINE T TimeDissolve1.lut}
  addUserKnob {20 endGroup n -1}
- addUserKnob {14 multiply R 0 100}
+ addUserKnob {14 multiply R 0 10}
  multiply 1
+ addUserKnob {7 direction -STARTLINE}
  addUserKnob {12 center}
  center {{width/2+.5} {height/2+.5}}
  addUserKnob {22 release_center l "release center" -STARTLINE T "node = nuke.thisNode()\nnode\['center'].clearAnimated()\nnode\['release_center'].setVisible(False)\nnode\['link_center'].setVisible(True)"}
@@ -35,10 +36,10 @@ Group {
  addUserKnob {41 fringe -STARTLINE T Dissolve1.fringe}
  addUserKnob {41 mix T Dissolve1.which}
  addUserKnob {20 Info_tab l Info}
- addUserKnob {26 dasname l "" +STARTLINE T "per channel<br><font size='5'>ZoomBlur</font> v1.02<br>"}
+ addUserKnob {26 dasname l "" +STARTLINE T "per channel<br><font size='5'>ZoomBlur</font> v1.03<br>"}
  addUserKnob {26 what l "" +STARTLINE T "pcZoomBlur is part of the pc toolset, a collection of nodes that offer\nthe possibility to affect the channels seperately. Chain them up in any\nway to achieve the desired effect.\n\nAn optional per channel alpha layer (pc_alpha) can be created to cor-\nrectly merge the result over a background. In this case it's necessary\nto use the pcMerge instead of a regular Merge."}
  addUserKnob {26 divider l "" +STARTLINE}
- addUserKnob {26 info l "" +STARTLINE T "Last change: 2019-09-09\n"}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2019-12-16\n"}
  addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
  addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
 }
@@ -66,8 +67,8 @@ Group {
   xpos -556
   ypos 114
  }
-set N222d5920 [stack 0]
-push $N222d5920
+set Nb1b05c00 [stack 0]
+push $Nb1b05c00
  Copy {
   inputs 2
   to0 rgba.red
@@ -100,13 +101,13 @@ push $N222d5920
   xpos -1546
   ypos -390
  }
-set N2f2f24c0 [stack 0]
+set N9708f400 [stack 0]
  Dot {
   name Dot17
   xpos -1106
   ypos -390
  }
-set N145218d0 [stack 0]
+set Nd617c00 [stack 0]
  Dot {
   name Dot16
   xpos -996
@@ -141,7 +142,7 @@ set N145218d0 [stack 0]
   xpos -996
   ypos -246
  }
-push $N145218d0
+push $Nd617c00
  Merge2 {
   inputs 2
   name Merge2
@@ -173,7 +174,7 @@ add_layer {pc_alpha pc_alpha.red pc_alpha.green pc_alpha.blue}
   xpos -1106
   ypos -6
  }
-set N27e60e60 [stack 0]
+set Naae03400 [stack 0]
  Dot {
   name Dot11
   xpos -886
@@ -190,7 +191,7 @@ set N27e60e60 [stack 0]
   xpos -920
   ypos 38
  }
-set N36186970 [stack 0]
+set N6f2e7400 [stack 0]
  Expression {
   temp_name0 n
   temp_expr0 hypot(width/2,height/2/pixel_aspect)
@@ -201,7 +202,7 @@ set N36186970 [stack 0]
   xpos -810
   ypos 110
  }
-push $N36186970
+push $N6f2e7400
  Expression {
   temp_name0 n
   temp_expr0 hypot(width/2,height/2/pixel_aspect)
@@ -222,11 +223,12 @@ push $N36186970
   ypos 182
  }
  Expression {
-  expr0 r*b
-  expr1 g*b
+  expr0 r*lerp(parent.multiply.w,b,parent.direction)
+  expr1 g*lerp(parent.multiply.h,b,parent.direction)
   name Expression4
   xpos -920
   ypos 230
+  cached true
  }
  Merge2 {
   inputs 2
@@ -244,7 +246,7 @@ push $N36186970
   xpos -886
   ypos 378
  }
-push $N27e60e60
+push $Naae03400
  Copy {
   inputs 2
   from0 rgba.red
@@ -288,13 +290,13 @@ push $N27e60e60
   xpos -1106
   ypos 786
  }
-set N1017f880 [stack 0]
+set Na4f61400 [stack 0]
  Dot {
   name Dot8
   xpos -1106
   ypos 882
  }
-set N1214e4c0 [stack 0]
+set N11faa800 [stack 0]
  Group {
   name GenerateAlpha
   tile_color 0x7f7f7fff
@@ -314,35 +316,35 @@ set N1214e4c0 [stack 0]
    xpos -6
    ypos 114
   }
-set Ne0bf17d0 [stack 0]
+set N208e8000 [stack 0]
   Expression {
    expr3 min(pc_alpha.red,pc_alpha.green,pc_alpha.blue)
    name min
    xpos 180
    ypos 206
   }
-push $Ne0bf17d0
+push $N208e8000
   Expression {
    expr3 max(pc_alpha.red,pc_alpha.green,pc_alpha.blue)
    name max
    xpos 70
    ypos 206
   }
-push $Ne0bf17d0
+push $N208e8000
   Expression {
    expr3 pc_alpha.red*0.2126+pc_alpha.green*0.7152+pc_alpha.blue*0.0722
    name luminance
    xpos -40
    ypos 206
   }
-push $Ne0bf17d0
+push $N208e8000
   Expression {
    expr3 (pc_alpha.red+pc_alpha.green+pc_alpha.blue)/3
    name average
    xpos -150
    ypos 206
   }
-push $Ne0bf17d0
+push $N208e8000
   Dot {
    name Dot2
    xpos -226
@@ -361,10 +363,10 @@ push $Ne0bf17d0
    ypos 398
   }
  end_group
-push $N1214e4c0
-push $N1017f880
-push $N27e60e60
-push $N2f2f24c0
+push $N11faa800
+push $Na4f61400
+push $Naae03400
+push $N9708f400
  Copy {
   inputs 2
   channels pc_alpha
@@ -378,7 +380,7 @@ push $N2f2f24c0
   xpos -1546
   ypos 690
  }
-set N390ac770 [stack 0]
+set Nec607400 [stack 0]
  Dot {
   name Dot7
   xpos -1326
@@ -414,7 +416,7 @@ set N390ac770 [stack 0]
   xpos -1326
   ypos 1050
  }
-push $N390ac770
+push $Nec607400
  Dissolve {
   inputs 2+1
   which 1
