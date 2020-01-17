@@ -1,0 +1,290 @@
+set cut_paste_input [stack 0]
+version 11.3 v3
+Group {
+ inputs 0
+ name Clock
+ selected true
+ xpos 1170
+ ypos 686
+ addUserKnob {20 User}
+ addUserKnob {41 diameter T controller.diameter}
+ addUserKnob {41 center T controller.center}
+ addUserKnob {41 format l "output format" T Reformat.format}
+}
+ Reformat {
+  inputs 0
+  name Reformat
+  xpos -150
+  ypos -136
+ }
+ Dot {
+  name Dot11
+  xpos -116
+  ypos -30
+ }
+set N3932400 [stack 0]
+ Dot {
+  name Dot8
+  xpos 214
+  ypos -30
+ }
+set N3933400 [stack 0]
+ Dot {
+  name Dot1
+  xpos 544
+  ypos -30
+ }
+set N3933000 [stack 0]
+ Dot {
+  name Dot2
+  xpos 874
+  ypos -30
+ }
+set N3932c00 [stack 0]
+ Dot {
+  name Dot4
+  xpos 1204
+  ypos -30
+ }
+set N3933c00 [stack 0]
+ Rectangle {
+  area {{-pointer_size.w/2*controller.multiplier/pixel_aspect+controller.center.x} {-pointer_size.h*offset*controller.multiplier+controller.center.y} {pointer_size.w/2*controller.multiplier/pixel_aspect+controller.center.x} {pointer_size.h*(1-offset)*controller.multiplier+controller.center.y}}
+  color {1 0 0 1}
+  name Rectangle4
+  xpos 1170
+  ypos 38
+  addUserKnob {20 User}
+  addUserKnob {14 pointer_size l "pointer size" R 0 100}
+  pointer_size {8 550}
+  addUserKnob {7 offset}
+  offset 0.2
+ }
+ Transform {
+  rotate {{"-360/60*\[date %S]"}}
+  center {{controller.center} {controller.center}}
+  name Transform10
+  xpos 1170
+  ypos 158
+ }
+push 0
+push $N3933c00
+ Dot {
+  name Dot6
+  xpos 1314
+  ypos -30
+ }
+set N3956c00 [stack 0]
+ Rectangle {
+  area {{-pointer_size.w/2*controller.multiplier/pixel_aspect+controller.center.x} {-pointer_size.h*offset*controller.multiplier+controller.center.y} {pointer_size.w/2*controller.multiplier/pixel_aspect+controller.center.x} {pointer_size.h*(1-offset)*controller.multiplier+controller.center.y}}
+  color {1 1 1 1}
+  name Rectangle5
+  xpos 1280
+  ypos 38
+  addUserKnob {20 User}
+  addUserKnob {14 pointer_size l "pointer size" R 0 100}
+  pointer_size {20 475}
+  addUserKnob {7 offset}
+  offset 0.2
+ }
+ FilterErode {
+  channels alpha
+  size {{-parent.diameter/1000}}
+  mix 0.5
+  name FilterErode1
+  xpos 1280
+  ypos 80
+ }
+ Transform {
+  rotate {{"-360/60*\[date %M]+Transform10.rotate/60"}}
+  center {{controller.center} {controller.center}}
+  name Transform9
+  xpos 1280
+  ypos 158
+ }
+push $N3956c00
+ Dot {
+  name Dot7
+  xpos 1424
+  ypos -30
+ }
+ Rectangle {
+  area {{-pointer_size.w/2*controller.multiplier/pixel_aspect+controller.center.x} {-pointer_size.h*offset*controller.multiplier+controller.center.y} {pointer_size.w/2*controller.multiplier/pixel_aspect+controller.center.x} {pointer_size.h*(1-offset)*controller.multiplier+controller.center.y}}
+  color {1 1 1 1}
+  name Rectangle3
+  xpos 1390
+  ypos 38
+  addUserKnob {20 User}
+  addUserKnob {14 pointer_size l "pointer size" R 0 100}
+  pointer_size {30 350}
+  addUserKnob {7 offset}
+  offset 0.2
+ }
+ FilterErode {
+  channels alpha
+  size {{-parent.diameter/1000}}
+  mix 0.5
+  name FilterErode2
+  selected true
+  xpos 1390
+  ypos 86
+ }
+ Transform {
+  rotate {{"-360/12*(\[date %k]-12)+Transform9.rotate/12"}}
+  center {{controller.center} {controller.center}}
+  name Transform8
+  xpos 1390
+  ypos 158
+ }
+ Merge2 {
+  inputs 3+1
+  name Merge1
+  xpos 1280
+  ypos 302
+ }
+ Dot {
+  name Dot3
+  xpos 1314
+  ypos 474
+ }
+push $N3932c00
+ Radial {
+  area {{position.x-dot_size/2/pixel_aspect*controller.multiplier} {position.y-dot_size/2*controller.multiplier} {position.x+dot_size/2/pixel_aspect*controller.multiplier} {position.y+dot_size/2*controller.multiplier}}
+  softness 0
+  name Radial3
+  xpos 840
+  ypos 38
+  addUserKnob {20 User}
+  addUserKnob {12 position}
+  position {{sin(x*pi/30)*(parent.diameter-dot_size*controller.multiplier)/2/pixel_aspect+controller.center} {cos(x*pi/30)*(parent.diameter-dot_size*controller.multiplier)/2+controller.center}}
+  addUserKnob {7 dot_size l "dot size" R 0 10}
+  dot_size 20
+ }
+ TimeEcho {
+  framesbehind 60
+  name TimeEcho1
+  xpos 840
+  ypos 230
+ }
+ FrameHold {
+  first_frame 59
+  name FrameHold6
+  xpos 840
+  ypos 272
+ }
+ Dot {
+  name Dot5
+  xpos 874
+  ypos 378
+ }
+push $N3933000
+ Rectangle {
+  area {{-rectangle_size.w/2*controller.multiplier/pixel_aspect+controller.center.x} {-rectangle_size.h*controller.multiplier+controller.center.y+controller.diameter/2} {rectangle_size.w/2*controller.multiplier/pixel_aspect+controller.center.x} {controller.center.y+controller.diameter/2}}
+  name Rectangle1
+  xpos 510
+  ypos 38
+  addUserKnob {20 User}
+  addUserKnob {14 rectangle_size R 0 100}
+  rectangle_size {22 80}
+ }
+ Transform {
+  rotate {{curve 0 x11 -330}}
+  center {{controller.center} {controller.center}}
+  name Transform2
+  xpos 510
+  ypos 158
+ }
+ TimeEcho {
+  framesbehind 12
+  name TimeEcho2
+  xpos 510
+  ypos 230
+ }
+ FrameHold {
+  first_frame 11
+  name FrameHold1
+  xpos 510
+  ypos 272
+ }
+ Merge2 {
+  inputs 2
+  name Merge7
+  xpos 510
+  ypos 374
+ }
+ Merge2 {
+  inputs 2
+  name Merge2
+  xpos 510
+  ypos 470
+ }
+ Radial {
+  area {{controller.center.x-size/2*controller.multiplier/pixel_aspect} {controller.center.y-size/2*controller.multiplier} {controller.center.x+size/2*controller.multiplier/pixel_aspect} {controller.center.y+size/2*controller.multiplier}}
+  softness 0
+  color 0
+  name Radial2
+  xpos 510
+  ypos 566
+  addUserKnob {20 User}
+  addUserKnob {7 size}
+  size 18
+ }
+ Dot {
+  name Dot9
+  xpos 544
+  ypos 690
+ }
+push $N3933400
+ Radial {
+  area {{-controller.diameter/2/pixel_aspect+controller.center.x} {-controller.diameter/2+controller.center.y} {controller.diameter/2/pixel_aspect+controller.center.x} {controller.diameter/2+controller.center.y}}
+  softness 0
+  color 0.02
+  name Radial1
+  xpos 180
+  ypos 374
+ }
+ Dot {
+  name Dot10
+  xpos 214
+  ypos 522
+ }
+push $N3932400
+ Ramp {
+  p0 {{controller.center.x-controller.diameter/2/pixel_aspect} 100}
+  p1 {{controller.center.x+controller.diameter/2/pixel_aspect} 100}
+  name Ramp1
+  xpos -150
+  ypos 374
+ }
+ Merge2 {
+  inputs 2
+  operation multiply
+  bbox A
+  name Merge3
+  xpos -150
+  ypos 518
+ }
+ Merge2 {
+  inputs 2
+  name Merge4
+  xpos -150
+  ypos 686
+ }
+ Output {
+  name Output1
+  xpos -150
+  ypos 806
+ }
+push $N3932400
+ NoOp {
+  name controller
+  xpos -370
+  ypos -34
+  addUserKnob {20 User}
+  addUserKnob {7 diameter R 0 1000}
+  diameter {{min(width,height)*0.75}}
+  addUserKnob {12 center}
+  center {{width/2} {height/2}}
+  addUserKnob {7 multiplier}
+  multiplier {{diameter/1000}}
+ }
+end_group
