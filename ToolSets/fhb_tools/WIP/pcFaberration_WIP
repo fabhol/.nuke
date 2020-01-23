@@ -4,12 +4,9 @@ push $cut_paste_input
 Group {
  name pcFaberration
  onCreate "n = nuke.thisNode()\nn\['scale'].setFlag(nuke.NO_ANIMATION)\nn\['offset'].setFlag(nuke.NO_ANIMATION)"
- knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\n\ndef copy_values():\n    scale = node\['scale'].value()\n    list = \[scale\[0],scale\[1],scale\[2],0]    \n    offset = node\['offset'].value()\n    new_curve = 'curve \{curve l x0.25 %s x0.5 %s x0.75 %s\}' % (list\[0]+offset, list\[1]+offset, list\[2]+offset)\n    with node:\n        nuke.toNode('TimeDissolve')\['lut'].fromScript(new_curve)\n\nif knob.name() in \['scale', 'offset']:\n    copy_values()\n\nif knob.name() == 'helper':\n    if knob.value() is True:\n        copy_values()\n        node\['scale'].setEnabled(True)\n        node\['offset'].setEnabled(True)"
+ knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\n\ndef copy_values():\n    scale = node\['scale'].value()\n    list = \[scale\[0],scale\[1],scale\[2],0]    \n    offset = node\['offset'].value()\n    new_curve = 'curve \{curve l x0.25 %s x0.5 %s x0.75 %s\}' % (list\[0]+offset, list\[1]+offset, list\[2]+offset)\n    with node:\n        td = nuke.toNode('TimeDissolve')\n        td\['lut'].fromScript(new_curve)\n        td\['helper'].setValue(td\['helper'].value()==False)\n\nif knob.name() in \['scale', 'offset']:\n    copy_values()\n\nif knob.name() == 'helper':\n    if knob.value() is True:\n        copy_values()\n        node\['scale'].setEnabled(True)\n        node\['offset'].setEnabled(True)"
  tile_color 0x7f7f7fff
  note_font Verdana
- selected true
- xpos 70
- ypos -711
  addUserKnob {20 FaberrationTab l Faberration}
  addUserKnob {4 output l mode t "Choose the layers that you want to affect.\n\nRGB: Only affects the RGB layer\n\nRGB + pc_alpha: Affects RGB and the per channel alpha layer. Select this mode, if you want to merge the result over a background. This only works with a pcMerge.\n\npc_alpha: Only affect the per channel alpha layer. Select this mode if your RGB channels already have chromatic aberration (for example objects from the plate), and you want to merge them on top of a background with a pcMerge.\nIn this case the RGB layer should not be premultiplied yet. Tick the 'premult RGB' check box in the pcMerge instead." M {RGB "RGB + pc_alpha" pc_alpha "" "" "" "" "" "" "" "" "" "" "" ""}}
  addUserKnob {41 alpha_operation l " alpha" t "There is no way of retaining a correct alpha channel after seperately processing the RGB channels. This lets you generate a new alpha based on the pc_alpha layer.\n\n<b>original</b>: the original alpha is piped through\n<b>average</b>/<b>max</b>/<b>min</b>: average/max/min of the three pc_alpha channels\n<b>luminance</b>: luminance of the pc_alpha using the Rec. 709 luma coefficients" -STARTLINE T GenerateAlpha.operation}
@@ -17,11 +14,14 @@ Group {
  addUserKnob {3 res -STARTLINE}
  res 20
  addUserKnob {26 divider01 l " "}
- addUserKnob {18 samples l samples* t "How often the curve gets subsampled for each channel. Carefully increase the value per channel until there are no visible steps anymore.\n\nSaturation !=1 doesn't support different sample values per channel and uses the highest value for all three channels.\n\n*The amount of samples directly influences the speed of this node."}
- samples {1 1 1}
+ addUserKnob {3 samples l samples* t "How often the curve gets subsampled. Carefully increase the value until there are no visible steps anymore.\n\n*The amount of samples directly influences the speed of this node."}
+ samples 3
+ addUserKnob {22 optimize -STARTLINE T "import faberration\nreload(faberration)\nnode = nuke.thisNode()\nsamples = int(node\['samples'].value())\nfaberration.start(node,samples)\n"}
+ addUserKnob {7 optimize_mix l "" -STARTLINE}
+ addUserKnob {6 samples_panelDropped l "panel dropped state" +HIDDEN +STARTLINE}
  addUserKnob {26 spacer l " " T " "}
  addUserKnob {18 scale t "Controls the curve on the basis of the scale of each channel. Look at the curve below to see how the values affect it.\nFor the initial setting you can try to pick the chromatic aberration of the plate by dragging the sample area over a high contrast aberrated edge. Then adjust until it matches the plate." R -1 1}
- scale {-0.5 0 0.5}
+ scale {0 0.1 1}
  addUserKnob {7 offset t "Global scale offset. Adjust to prevent stretched or black pixels at the edge of the format." R -1 1}
  addUserKnob {6 helper t "checker to indicate whether the rgb control knobs are disabled or not" +INVISIBLE +STARTLINE}
  helper true
@@ -32,17 +32,17 @@ Group {
  addUserKnob {22 whatsthis l "What am I looking at?" -STARTLINE T "nuke.message(\"\"\"The x-axis represents the visible color spectrum (between 0 and 1, in the order red-green-blue), the y-axis represents the focus error. \n\nThe primary colours have a spread of 0.5, with their highest intensities being at the folowing x-values:\n\nred: x=0.25\ngreen: x=0.5\nblue: x=0.75\n\nwith mixed colors in between.\"\"\")"}
  addUserKnob {26 divider02 l " "}
  addUserKnob {20 endGroup n -1}
- addUserKnob {7 saturation t "Saturation of the effect.\nSaturation !=1 doesn't support different sample values per channel and uses the highest value for all three channels."}
+ addUserKnob {7 saturation t "Saturation of the effect"}
  saturation 1
  addUserKnob {7 weighting l weighting* t "Controls the falloff of the effect from the center to the corners.\n<1 less effect in the center\n>1 stronger effect in the center\n\n*Any value other than 1 causes an internal switch from Transform to STMap, which reduces the speed significantly." R 0 5}
  weighting 1
  addUserKnob {14 multiply t "Multiply of the effect." R 0 10}
- multiply 1
+ multiply 4
  addUserKnob {7 direction l direction* t "Controls how different multiply values in w/h affect the direction of the effect.\nDoesn't do anything if w/h are the same.\n\n*Any value other than 0 causes an internal switch from Transform to STMap, which reduces the speed significantly."}
  addUserKnob {12 center t "Center of the effect."}
- center {{width/2+.5} {height/2+.5}}
+ center {{width/2 i} {height/2 i}}
  addUserKnob {22 release_center l "release center" -STARTLINE T "node = nuke.thisNode()\nnode\['center'].clearAnimated()\nnode\['release_center'].setVisible(False)\nnode\['link_center'].setVisible(True)"}
- addUserKnob {22 link_center l "link to format center" -STARTLINE +HIDDEN T "node = nuke.thisNode()\nnode\['center'].setExpression('width/2+.5',0)\nnode\['center'].setExpression('height/2+.5',1)\nnode\['link_center'].setVisible(False)\nnode\['release_center'].setVisible(True)"}
+ addUserKnob {22 link_center l "link to format center" -STARTLINE +HIDDEN T "node = nuke.thisNode()\nnode\['center'].setExpression('width/2',0)\nnode\['center'].setExpression('height/2',1)\nnode\['link_center'].setVisible(False)\nnode\['release_center'].setVisible(True)"}
  addUserKnob {6 invert t "Invert the effect. Useful to remove aberration." +STARTLINE}
  addUserKnob {41 filter T STMap.filter}
  addUserKnob {6 black_outside l "black outside" -STARTLINE}
@@ -68,13 +68,13 @@ Group {
   inputs 0
   name mask
   xpos -1800
-  ypos 3230
+  ypos 2606
   number 1
  }
  Dot {
   name Dot1
   xpos -1766
-  ypos 3306
+  ypos 2682
  }
  Input {
   inputs 0
@@ -87,13 +87,13 @@ Group {
   xpos -1546
   ypos -390
  }
-set N619c7000 [stack 0]
+set N990b4c00 [stack 0]
  Dot {
   name Dot30
   xpos -886
   ypos -390
  }
-set N619c7400 [stack 0]
+set N990b4800 [stack 0]
  Dot {
   name Dot31
   xpos -776
@@ -128,7 +128,7 @@ set N619c7400 [stack 0]
   xpos -776
   ypos -222
  }
-push $N619c7400
+push $N990b4800
  Merge2 {
   inputs 2
   name Merge3
@@ -164,7 +164,7 @@ add_layer {pc_alpha pc_alpha.red pc_alpha.green pc_alpha.blue}
   xpos -886
   ypos 90
  }
-set N5ccaa800 [stack 0]
+set N990e0800 [stack 0]
  Dot {
   name Dot37
   xpos -1216
@@ -173,67 +173,9 @@ set N5ccaa800 [stack 0]
  Dot {
   name Dot29
   xpos -1216
-  ypos 2538
+  ypos 2130
  }
-set N5ccab000 [stack 0]
- Dot {
-  name Dot28
-  xpos -1216
-  ypos 2610
- }
-set N69cb1800 [stack 0]
- Dot {
-  name Dot33
-  xpos -1216
-  ypos 2682
- }
-set N69cb1400 [stack 0]
-push $N69cb1800
-push $N5ccab000
-push $N5ccaa800
-add_layer {correct_values correct_values.red correct_values.green correct_values.blue none correct_values.alpha}
- AddChannels {
-  channels correct_values
-  color 1
-  name AddChannels1
-  xpos -920
-  ypos 108
- }
- NoTimeBlur {
-  rounding floor
-  name NoTimeBlur1
-  xpos -920
-  ypos 186
- }
- Multiply {
-  value {{lerp(luminance,spectrum.r,parent.saturation) i} {lerp(luminance,spectrum.g,parent.saturation) i} {lerp(luminance,spectrum.b,parent.saturation) i} {curve}}
-  name Multiply1
-  xpos -920
-  ypos 272
-  addUserKnob {20 User}
-  addUserKnob {18 spectrum}
-  spectrum {{curve(x%1) L 0 x0.25 1 0} {curve(x%1) L x0.25 0 x0.5 1 0} {curve(x%1) L x0.5 0 x0.75 1 0}}
-  addUserKnob {6 spectrum_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
-  addUserKnob {6 spectrum_panelDropped_1 l "panel dropped state" -STARTLINE +HIDDEN}
-  addUserKnob {7 luminance}
-  luminance {{spectrum.r*0.2126+spectrum.g*0.7152+spectrum.b*0.0722 i}}
- }
- Dot {
-  name Dot13
-  xpos -886
-  ypos 378
- }
-set N69cb0000 [stack 0]
- Dot {
-  name Dot14
-  xpos -1106
-  ypos 378
- }
- Dot {
-  name Dot12
-  xpos -1106
-  ypos 1386
- }
+set N990e0000 [stack 0]
  Input {
   inputs 0
   name effect_mask
@@ -246,8 +188,8 @@ set N69cb0000 [stack 0]
   xpos -226
   ypos 546
  }
-set N6e9e1800 [stack 0]
-push $N6e9e1800
+set N99107800 [stack 0]
+push $N99107800
  Copy {
   inputs 2
   to0 rgba.red
@@ -269,15 +211,17 @@ push $N6e9e1800
   xpos -226
   ypos 810
  }
-push $N69cb0000
-add_layer {rga_desat rga_desat.red rga_desat.green rga_desat.blue}
-add_layer {pc_alpha_desat pc_alpha_desat.red pc_alpha_desat.green pc_alpha_desat.blue}
+push $N990e0800
+ NoTimeBlur {
+  rounding floor
+  name NoTimeBlur1
+  xpos -920
+  ypos 206
+ }
  Remove {
   operation keep
   channels rgb
   channels2 pc_alpha
-  channels3 rga_desat
-  channels4 pc_alpha_desat
   name Remove2
   xpos -920
   ypos 446
@@ -287,13 +231,13 @@ add_layer {pc_alpha_desat pc_alpha_desat.red pc_alpha_desat.green pc_alpha_desat
   xpos -886
   ypos 546
  }
-set N6bb57000 [stack 0]
+set N99106000 [stack 0]
  Dot {
   name Dot26
   xpos -666
   ypos 546
  }
-set N6bb57c00 [stack 0]
+set N9912bc00 [stack 0]
  Dot {
   name Dot22
   xpos -446
@@ -356,7 +300,7 @@ set N6bb57c00 [stack 0]
   xpos -446
   ypos 1098
  }
-push $N6bb57c00
+push $N9912bc00
  BlackOutside {
   name BlackOutside1
   xpos -700
@@ -375,7 +319,7 @@ push $N6bb57c00
   xpos -666
   ypos 1290
  }
-push $N6bb57000
+push $N99106000
  Transform {
   scale {{parent.detour.scale*parent.multiply.w+1} {parent.detour.scale*parent.multiply.h+1}}
   center {{parent.center} {parent.center}}
@@ -393,163 +337,122 @@ push $N6bb57000
   xpos -920
   ypos 1286
  }
- Copy {
-  inputs 2
+add_layer {correct_values correct_values.red correct_values.green correct_values.blue none correct_values.alpha}
+ AddChannels {
   channels correct_values
-  name Copy2
+  color 1
+  name AddChannels1
   xpos -920
-  ypos 1369
+  ypos 1328
  }
- Dot {
-  name Dot5
-  xpos -886
-  ypos 1482
+ Multiply {
+  value {{lerp(luminance,spectrum.r,parent.saturation)} {lerp(luminance,spectrum.g,parent.saturation)} {lerp(luminance,spectrum.b,parent.saturation)} {curve}}
+  name Multiply1
+  xpos -920
+  ypos 1376
+  addUserKnob {20 User}
+  addUserKnob {18 spectrum}
+  spectrum {{curve(x%1) L 0 x0.25 1 0} {curve(x%1) L x0.25 0 x0.5 1 0} {curve(x%1) L x0.5 0 x0.75 1 0}}
+  addUserKnob {6 spectrum_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {6 spectrum_panelDropped_1 l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {6 spectrum_panelDropped_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {6 spectrum_panelDropped_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {6 spectrum_panelDropped_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {6 spectrum_panelDropped_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {6 spectrum_panelDropped_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {6 spectrum_panelDropped_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {6 spectrum_panelDropped_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {6 spectrum_panelDropped_1_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {6 spectrum_panelDropped_1_1_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {6 spectrum_panelDropped_1_1_1_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {6 spectrum_panelDropped_1_1_1_1_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {6 spectrum_panelDropped_1_1_1_1_1_1_1_1_1_1_1_1_1 l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {7 luminance}
+  luminance {{spectrum.r*0.2126+spectrum.g*0.7152+spectrum.b*0.0722}}
  }
-set Ne95b9800 [stack 0]
- Dot {
-  name Dot39
-  xpos -556
-  ypos 1482
+set N9a002400 [stack 0]
+ TimeWarp {
+  lookup {{frame_knob(lerp(x,mapper,parent.optimize_mix))}}
+  time ""
+  filter none
+  name TimeWarp
+  xpos -920
+  ypos 1454
+  addUserKnob {20 User}
+  addUserKnob {7 frame_knob l frame}
+  frame_knob {{x i}}
+  addUserKnob {7 mapper}
+  mapper {{curve(x%1)+floor(x) 0 x1.094667482e-10 0.01010101009 0.02020202018 0.03030303121 0.04040404037 0.05050504953 0.06060606241 x7.662672163e-10 0.07070706785 x8.757339853e-10 0.08080808073 x9.852006988e-10 0.09090909362 x1.094667468e-09 0.1010100991 0.1111111119 0.1212121248 0.1313131303 x1.532534433e-09 0.1414141357 x1.642001202e-09 0.151515156 0.1616161615 0.1717171669 x1.970401398e-09 0.1818181872 x2.079868278e-09 0.1919191927 x2.189334936e-09 0.2020201981 x2.298801816e-09 0.2121212184 x2.408268474e-09 0.2222222239 0.2323232293 x2.627202011e-09 0.2424242496 x4.936365272e-08 0.2525252402 x5.858148143e-06 0.2626262605 x3.415297397e-05 0.2727272809 x0.0001029226696 0.2828282714 x0.0002301560744 0.2929292917 x0.0004338420113 0.3030303121 x0.0007319693104 0.3131313026 x0.00114252686 0.3232323229 x0.001683503389 0.3333333433 x0.002372887684 0.3434343338 x0.003228668822 0.3535353541 x0.004268835764 0.3636363745 x0.005511376541 0.373737365 x0.006974280812 0.3838383853 x0.008675537072 0.3939394057 x0.01063313428 0.4040403962 x0.01286506094 0.4141414165 x0.01538930647 0.4242424369 x0.01822385937 0.4343434274 x0.0213867072 0.4444444478 x0.02489584126 0.4545454681 x0.0287692491 0.4646464586 x0.03302491829 0.474747479 x0.03768084198 0.4848484993 x0.04275500402 0.4949494898 x0.04837520421 0.5050504804 x0.05519128218 0.5151515007 x0.06326208264 0.525252521 x0.07253363729 0.5353535414 x0.0829519853 0.5454545617 x0.09446314722 0.555555582 x0.1070131734 0.5656565428 x0.1205480769 0.5757575631 x0.1350139081 0.5858585835 x0.1503566951 0.5959596038 x0.1665224731 0.6060606241 x0.1834572703 0.6161616445 x0.2011071295 0.6262626052 x0.2194180638 0.6363636255 x0.238336131 0.6464646459 x0.2578073442 0.6565656662 x0.2777777612 0.6666666865 x0.2981933951 0.6767676473 x0.3190003037 0.6868686676 x0.3401444852 0.6969696879 x0.3615719974 0.7070707083 x0.3832288682 0.7171717286 x0.4050611258 0.7272727489 x0.4270147979 0.7373737097 x0.4490359426 0.74747473 x0.4710743725 0.7575757504 x0.4931129515 0.7676767707 0.777777791 0.7878788114 0.7979797721 0.8080807924 x0.603305757 0.8181818128 x0.625344336 0.8282828331 0.8383838534 0.8484848738 0.8585858345 x0.7134985924 0.8686868548 x0.7355371714 0.8787878752 0.8888888955 0.8989899158 0.9090909362 x0.8236914277 0.9191918969 x0.8457300067 0.9292929173 0.9393939376 0.9494949579 0.9595959783 0.9696969986 x0.955922842 0.9797979593 x0.977961421 0.9898989797 1}}
+ }
+ Multiply {
+  value {{parent.TimeWarp.lookup.derivative(x)}}
+  name Multiply3
+  xpos -920
+  ypos 1520
  }
  TimeBlur {
-  divisions {{rint(max(parent.samples.r,parent.samples.g,parent.samples.b)*2)+1}}
+  divisions {{parent.samples}}
   shutter {{1/(divisions+1)*divisions}}
   shuttercustomoffset {{1/(divisions+1)}}
-  name TimeBlur2
-  xpos -590
-  ypos 1766
+  name TimeBlur
+  xpos -920
+  ypos 1598
  }
- Dot {
-  name Dot19
-  xpos -556
-  ypos 2178
+set N9a035800 [stack 0]
+ Expression {
+  expr0 correct_values.red==0
+  expr1 correct_values.green==0
+  expr2 correct_values.blue==0
+  channel3 none
+  name Expression5
+  xpos -814
+  ypos 1626
  }
-push $Ne95b9800
- Dot {
-  name Dot36
-  xpos -886
-  ypos 1602
+ Shuffle {
+  out correct_values
+  out2 pc_alpha
+  name Shuffle1
+  xpos -814
+  ypos 1652
  }
-set Ne95b8400 [stack 0]
- Dot {
-  name Dot3
-  xpos -776
-  ypos 1602
- }
-set Ne95b9c00 [stack 0]
- Dot {
-  name Dot4
-  xpos -666
-  ypos 1602
- }
- TimeWarp {
-  lookup {{frame+.75}}
-  time ""
-  filter none
-  name TimeWarp3
-  xpos -700
-  ypos 1694
-  disable {{!TimeBlur1.disable}}
- }
+push $N9a002400
  TimeBlur {
-  divisions {{rint(parent.samples.b)}}
-  shutter {{1/((divisions+1)*2)*divisions}}
-  shuttercustomoffset {{0.5+1/((divisions+1)*2)}}
+  divisions 3
+  shutter 0.75
+  shuttercustomoffset 0.25
   name TimeBlur1
   xpos -700
-  ypos 1766
-  disable {{divisions<=1}}
+  ypos 1598
  }
- Dot {
-  name Dot21
-  xpos -666
-  ypos 2058
- }
-push $Ne95b9c00
- TimeWarp {
-  lookup {{frame+.5}}
-  time ""
-  filter none
-  name TimeWarp2
-  xpos -810
-  ypos 1694
-  disable {{!TimeBlur5.disable}}
- }
- TimeBlur {
-  divisions {{rint(parent.samples.g)}}
-  shutter {{1/((divisions+1)*2)*divisions}}
-  shuttercustomoffset {{0.25+1/((divisions+1)*2)}}
-  name TimeBlur5
-  xpos -810
-  ypos 1766
-  disable {{divisions<=1}}
- }
- Dot {
-  name Dot35
-  xpos -776
-  ypos 1914
- }
-push $Ne95b8400
- TimeWarp {
-  lookup {{frame+.25}}
-  time ""
-  filter none
-  name TimeWarp1
-  xpos -920
-  ypos 1694
-  disable {{!TimeBlur4.disable x999 1}}
- }
- TimeBlur {
-  divisions {{rint(parent.samples.r)}}
-  shutter {{1/((divisions+1)*2)*divisions}}
-  shuttercustomoffset {{1/((divisions+1)*2)}}
-  name TimeBlur4
-  xpos -920
-  ypos 1766
-  disable {{divisions<=1}}
- }
- Copy {
+ Merge2 {
   inputs 2
-  from0 rgba.green
-  to0 rgba.green
-  from1 pc_alpha.green
-  to1 pc_alpha.green
-  from2 correct_values.green
-  to2 correct_values.green
-  name Copy12
-  xpos -920
-  ypos 1891
+  operation multiply
+  also_merge all
+  name Merge4
+  xpos -700
+  ypos 1681
  }
- Copy {
+push $N9a035800
+ Merge2 {
   inputs 2
-  from0 rgba.blue
-  to0 rgba.blue
-  from1 pc_alpha.blue
-  to1 pc_alpha.blue
-  from2 correct_values.blue
-  to2 correct_values.blue
-  name Copy13
+  operation plus
+  also_merge all
+  name Merge2
   xpos -920
-  ypos 2035
- }
- Switch {
-  inputs 2
-  which {{"parent.saturation!=1 || (parent.samples.r == parent.samples.g && parent.samples.r == parent.samples.b)" i}}
-  name Switch1
-  xpos -920
-  ypos 2174
+  ypos 1760
+  disable true
  }
  Dot {
   name Dot16
   xpos -886
-  ypos 2298
+  ypos 1794
  }
-set Nd2941400 [stack 0]
-push $Nd2941400
+set N9a034000 [stack 0]
+push $N9a034000
  Dot {
   name Dot17
   xpos -1106
-  ypos 2298
+  ypos 1794
  }
  Shuffle {
   in correct_values
@@ -562,12 +465,12 @@ push $Nd2941400
   name Shuffle3
   label "\[value in]"
   xpos -1140
-  ypos 2360
+  ypos 1856
  }
  Dot {
   name Dot15
   xpos -1106
-  ypos 2442
+  ypos 1938
  }
  Merge2 {
   inputs 2
@@ -578,58 +481,33 @@ push $Nd2941400
   also_merge pc_alpha
   name Merge1
   xpos -920
-  ypos 2438
+  ypos 1934
  }
- Copy {
+set N9a063000 [stack 0]
+ Switch {
   inputs 2
-  from0 rgba.red
-  to0 rgba.red
-  from1 pc_alpha.red
-  to1 pc_alpha.red
-  name Copy7
+  which {{TimeBlur.divisions<2 i}}
+  name Switch1
   xpos -920
-  ypos 2521
-  disable {{"!(parent.samples.r<=0 && parent.saturation>=1)"}}
- }
- Copy {
-  inputs 2
-  from0 rgba.green
-  to0 rgba.green
-  from1 pc_alpha.green
-  to1 pc_alpha.green
-  name Copy8
-  xpos -920
-  ypos 2593
-  disable {{"!(parent.samples.g<=0 && parent.saturation>=1)"}}
- }
- Copy {
-  inputs 2
-  from0 rgba.blue
-  to0 rgba.blue
-  from1 pc_alpha.blue
-  to1 pc_alpha.blue
-  name Copy9
-  xpos -920
-  ypos 2665
-  disable {{"!(parent.samples.b<=0 && parent.saturation>=1)"}}
+  ypos 2126
  }
  Dot {
   name Dot9
   xpos -886
-  ypos 2994
+  ypos 2370
  }
-set N36417800 [stack 0]
+set N9a062800 [stack 0]
  Dot {
   name Dot8
   xpos -886
-  ypos 3090
+  ypos 2466
  }
-set N36417000 [stack 0]
+set N9a062400 [stack 0]
  Group {
   name GenerateAlpha
   tile_color 0x7f7f7fff
   xpos -920
-  ypos 3182
+  ypos 2558
   addUserKnob {20 GenerateAlpha_tab l GenerateAlpha}
   addUserKnob {4 operation M {original average luminance max min "" "" "" ""}}
   operation average
@@ -645,7 +523,7 @@ set N36417000 [stack 0]
    xpos -6
    ypos 114
   }
-set N909c3c00 [stack 0]
+set N9a08dc00 [stack 0]
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 min(pc_alpha.red,pc_alpha.green,pc_alpha.blue)
@@ -656,7 +534,7 @@ set N909c3c00 [stack 0]
    xpos 180
    ypos 206
   }
-push $N909c3c00
+push $N9a08dc00
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 max(pc_alpha.red,pc_alpha.green,pc_alpha.blue)
@@ -667,7 +545,7 @@ push $N909c3c00
    xpos 70
    ypos 206
   }
-push $N909c3c00
+push $N9a08dc00
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 pc_alpha.red*0.2126+pc_alpha.green*0.7152+pc_alpha.blue*0.0722
@@ -679,7 +557,7 @@ push $N909c3c00
    xpos -40
    ypos 206
   }
-push $N909c3c00
+push $N9a08dc00
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 (pc_alpha.red+pc_alpha.green+pc_alpha.blue)/3
@@ -690,7 +568,7 @@ push $N909c3c00
    xpos -150
    ypos 206
   }
-push $N909c3c00
+push $N9a08dc00
   Dot {
    name Dot2
    xpos -226
@@ -709,40 +587,40 @@ push $N909c3c00
    ypos 398
   }
  end_group
-push $N36417000
-push $N36417800
-push $N69cb1400
+push $N9a062400
+push $N9a062800
+push $N990e0000
  Dot {
   name Dot2
   xpos -1216
-  ypos 2778
+  ypos 2154
  }
-push $N619c7000
+push $N990b4c00
  Copy {
   inputs 2
   channels pc_alpha
   name Copy10
   xpos -1580
-  ypos 2761
+  ypos 2137
   disable {{"parent.output==0 || Dissolve.which<=0"}}
  }
  Dot {
   name Dot6
   xpos -1546
-  ypos 2898
+  ypos 2274
  }
-set N7995f000 [stack 0]
+set N99d79400 [stack 0]
  Dot {
   name Dot7
   xpos -1326
-  ypos 2898
+  ypos 2274
  }
  Copy {
   inputs 2
   channels rgb
   name Copy1
   xpos -1360
-  ypos 2977
+  ypos 2353
   disable {{parent.output==2}}
  }
  Copy {
@@ -750,7 +628,7 @@ set N7995f000 [stack 0]
   channels pc_alpha
   name Copy6
   xpos -1360
-  ypos 3073
+  ypos 2449
   disable {{parent.output==0}}
  }
  Copy {
@@ -759,29 +637,28 @@ set N7995f000 [stack 0]
   to0 rgba.alpha
   name Copy11
   xpos -1360
-  ypos 3176
+  ypos 2552
   disable {{GenerateAlpha.operation==0}}
  }
  Dot {
   name Dot10
   xpos -1326
-  ypos 3306
+  ypos 2682
  }
-push $N7995f000
+push $N99d79400
  Dissolve {
   inputs 2+1
   which 1
   maskChannelMask none
   name Dissolve
   xpos -1580
-  ypos 3296
+  ypos 2672
   disable {{"(!\[exists parent.input0.name]) && (Merge3.disable)"}}
  }
  Output {
   name Output1
-  selected true
   xpos -1580
-  ypos 3422
+  ypos 2798
  }
  NoOp {
   inputs 0
@@ -792,12 +669,31 @@ push $N7995f000
   addUserKnob {7 scale R -10 10}
   scale {{TimeDissolve.lut(x%1)*(parent.invert?-1:1)/100}}
  }
+ Multiply {
+  inputs 0
+  value {{TimeDissolve.lut.derivative(x) i}}
+  name Multiply2
+  xpos -654
+  ypos 858
+ }
  TimeDissolve {
   inputs 0
-  lut {curve {curve l x0.25 -0.5 x0.5 0 0.5}}
+  lut {curve {curve l x0.25 0 x0.5 0.1 1}}
   name TimeDissolve
-  knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\nparent = nuke.thisParent()\n\nif knob.name() == 'lut':\n    if parent\['helper'].value() is True:\n        parent\['scale'].setFlag(nuke.DISABLED)\n        parent\['offset'].setFlag(nuke.DISABLED)\n        parent\['helper'].setValue(False)"
+  knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\nparent = nuke.thisParent()\n\ndef optimize():\n    with parent:\n        curve = nuke.toNode('TimeDissolve')\['lut']\n        samples = 100\n        previous_value = 0\n        distance = 0\n        value_dict = \{\}\n        for n in xrange(0,samples):\n            x = 1.0/(samples-1)*n\n            value = curve.getValueAt(x)\n            if n > 0:\n                distance += abs(value-previous_value)\n            value_dict\[x] = distance\n            previous_value = value\n        tw_lookup = nuke.toNode('TimeWarp')\['mapper']\n        tw_lookup.clearAnimated()\n        tw_lookup.setAnimated()\n        anim_list = \[]\n        for n in sorted(value_dict.keys()):\n            anim_list.append(nuke.AnimationKey(value_dict\[n]/distance,n))\n        anim = tw_lookup.animation(0)\n        anim.addKey(anim_list)\n        tw_lookup.setExpression('curve(x%1)+floor(x)')\n\nif knob.name() == 'lut':\n    if parent\['helper'].value() is True:\n        parent\['scale'].setFlag(nuke.DISABLED)\n        parent\['offset'].setFlag(nuke.DISABLED)\n        parent\['helper'].setValue(False)\n    optimize()\n\nif knob.name() == 'helper':\n    optimize()"
   xpos -810
   ypos 806
+  addUserKnob {20 User}
+  addUserKnob {6 helper +STARTLINE}
+ }
+push $N9a035800
+push $N9a063000
+ Viewer {
+  inputs 2
+  frame_range 1-1
+  colour_sample_bbox {-0.2645833194 -0.1854166687 -0.2635416687 -0.184375003}
+  name Viewer1
+  xpos -504
+  ypos 1478
  }
 end_group
