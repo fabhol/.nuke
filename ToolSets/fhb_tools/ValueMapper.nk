@@ -1,0 +1,18 @@
+NoOp {
+ name ValueMapper
+ help "The old value (or curve) is turned into a new value where a is turned into a' and b is turned into b'"
+ selected true
+ xpos -3780
+ ypos -1545
+ addUserKnob {20 User}
+ addUserKnob {7 value_old l "old value"}
+ value_old 5
+ addUserKnob {7 a}
+ addUserKnob {7 a_ l "&#x2192; a'" -STARTLINE}
+ addUserKnob {7 b}
+ b 10
+ addUserKnob {7 b_ l "&#x2192; b'" -STARTLINE}
+ b_ 1
+ addUserKnob {7 value_new l "new value"}
+ value_new {{lerp(a,a_,b,b_,value_old)}}
+}
