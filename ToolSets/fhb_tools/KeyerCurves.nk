@@ -1,0 +1,58 @@
+set cut_paste_input [stack 0]
+version 11.3 v5
+push $cut_paste_input
+Group {
+name KeyerCurves
+tile_color 0x7f7f7fff
+addUserKnob {20 User}
+addUserKnob {41 input T Keyer1.input}
+addUserKnob {41 output T Keyer1.output}
+addUserKnob {41 combine l "" -STARTLINE T Keyer1.combine}
+addUserKnob {41 invert -STARTLINE T Keyer1.invert}
+addUserKnob {41 operation T Keyer1.operation}
+addUserKnob {41 lut l "" +STARTLINE T ColorLookup1.lut}
+}
+Input {
+inputs 0
+name Input1
+xpos -40
+ypos -9
+}
+Dot {
+name Dot1
+xpos -6
+ypos 42
+}
+set N2614ea60 [stack 0]
+Dot {
+name Dot2
+xpos 104
+ypos 42
+}
+ColorLookup {
+channels all
+name ColorLookup1
+xpos 70
+ypos 87
+}
+Keyer {
+operation "luminance key"
+name Keyer1
+xpos 70
+ypos 178
+}
+push $N2614ea60
+Copy {
+inputs 2
+from0 {{{parent.Keyer1.output}}}
+to0 {{{parent.Keyer1.output}}}
+name Copy1
+xpos -40
+ypos 178
+}
+Output {
+name Output1
+xpos -40
+ypos 279
+}
+end_group
