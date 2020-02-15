@@ -1,0 +1,19 @@
+set cut_paste_input [stack 0]
+version 11.3 v5
+push $cut_paste_input
+NoOp {
+name PointMath
+addUserKnob {20 User}
+addUserKnob {18 A t "Coordinates of point A\n\nIt's an RGB knob to allow picking color values of a world position pass."}
+A {0 0 0}
+addUserKnob {18 B t "Coordinates of point B\n\nIt's an RGB knob to allow picking color values of a world position pass."}
+B {10 10 10}
+addUserKnob {26 text l "" +STARTLINE}
+addUserKnob {13 C t "Point on the line defined by A and B. The slider on the right moves it between the two points."}
+C {{lerp(A.r,B.r,weight)} {lerp(A.g,B.g,weight)} {lerp(A.b,B.b,weight)}}
+addUserKnob {7 weight l "" t "Move point C between points A and B. 0 = A, 1 = B" -STARTLINE}
+weight 0.5
+addUserKnob {78 AB l "<SPAN STYLE=\"text-decoration:overline\">AB</SPAN> " t "Distance from point A to B." n 1}
+AB {{sqrt(pow2(A.r-B.r)+pow2(A.g-B.g)+pow2(A.b-B.b))}}
+addUserKnob {6 color_rgb_panelDropped_2 l "panel dropped state" +HIDDEN +STARTLINE}
+}
