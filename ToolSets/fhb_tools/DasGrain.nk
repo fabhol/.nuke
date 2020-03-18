@@ -1058,7 +1058,7 @@ clone $C1990c00 {
  }
  Multiply {
   channels rgb
-  value {{"1 / Expression.temp_expr02}}
+  value {{"1 / Expression.temp_expr0"}}
   name Multiply5
   xpos 400
   ypos 2462
