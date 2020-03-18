@@ -385,7 +385,7 @@ set N11b99c00 [stack 0]
  }
  Multiply {
   channels rgb
-  value {{"1 / parent.luminance - 1} 0 0 0"}
+  value {{"1 / parent.luminance - 1"} 0 0 0"}
   name Multiply6
   xpos 430
   ypos 14
