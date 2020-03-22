@@ -4,7 +4,7 @@ Group {
  onCreate "import random\n\ntestimonials = \[\n    \"Such an elegant solution, love it!\",\n    \"Your gizmo is beyond expectation\",\n    \"Totally awesome!\",\n    \"DasGrain is officially the best thing ever\",\n    \"It's really working!\",\n    \"Das bringt Tr&auml;nen in meine Augen\",\n    \"DasGrain is the salvation we waited for\",\n    \"It's really working\",\n    \"I save a lot of time, and definitely my nerves :)\",\n    \"It's alright\",\n    \"My new favourite node, thanks!<br>Having said that, ...\"\n    ]\n\nnode = nuke.thisNode()\nnode\['testimonial'].setValue('<br><br><br><i>&laquo;%s&raquo;</i><br>&mdash; anonymous<br><br>' % random.choice(testimonials))\nnode\['box'].setFlag(nuke.NO_ANIMATION)"
  knobChanged "n = nuke.thisNode()\nk = nuke.thisKnob()\n\nif k.name() == 'box':\n    this_frame = nuke.frame()\n    n\['sample_frame'].setValue(this_frame)"
  tile_color 0x7f7f7fff
- label "v1.7.1 | 2020-03-17"
+ label "v1.7.2 | 2020-03-22"
  addUserKnob {20 Analyse_tab l Analyse}
  addUserKnob {41 output t "<strong>regrained comp</strong> it is what it sais\n\n<strong>original grain</strong> plate minus degrained plate\n<strong>normalised grain</strong> check if the normalisation worked. It should be as even as possible. This is what you want to output if you want to prerender a grain plate. Later you can plug it into the <i>external grain</i> input of another DasGrain\n<strong>adapted grain</strong> check if the adaptation worked. Output this if you want to further manipulate the grain (who knows what the sup is gonna come up with...). After simply plus it to your comp.\n<strong>grain QC</strong> check if voronoi seams are visible (-> edgeblend), or the scattered grain looks different to the original plate grain (-> maybe bad sample area or wrong luminance degrain amount)" T Output.output}
  addUserKnob {26 spacer01_1 l " " T " "}
@@ -77,12 +77,12 @@ Group {
  addUserKnob {22 troubleshoot l Troubleshoot t HEEEEEEELP T "messages = \[]\n\nthis = nuke.thisNode()\n\n#########################\n\nif this.input(0) is None or this.input(1) is None or this.input(2) is None:\n    messages.append(\"<font color='red'><strong>ERROR</strong></font> Plate, degrained plate and comp need to be connected to the appropriate inputs.\")\n\n#########################\n\nelse:\n\n    def format_to_tuple(g):\n        \"\"\"returns (1024, 786, 2.0)\n        \"\"\"\n        return (g.format().width(), g.format().height(), g.format().pixelAspect())\n\n    format_set = set(\[\n        format_to_tuple(this.input(0)),\n        format_to_tuple(this.input(1)),\n        format_to_tuple(this.input(2)),\n        ])\n    if len(format_set) != 1:\n        messages.append(\"<font color='orange'><strong>WARNING</strong></font> Format missmatch: Make sure formats of plate, degrained plate and comp match.\")\n\n    if (this.input(1).firstFrame() != this.input(2).firstFrame()) or (this.input(1).lastFrame() != this.input(2).lastFrame()):\n        messages.append(\"<font color='orange'><strong>WARNING</strong></font> The frame ranges of plate and degrained plate don't match. Double check that they belong together.\")\n\n#########################\n\nmessages.append(\"Double check that plate and degrained plate haven't been modified in any way (paint, despill, etc).\")\n\n#########################\n\nif this\['luminance'].getValue() == 1:\n    messages.append(\"Are you working on a completely degrained plate? If not, you might have to set the luminance degrain amount.\")\n\n#########################\n\nblank = 'bWFzdGVyIHt9CnJlZCB7fQpncmVlbiB7fQpibHVlIHt9CmFscGhhIHt9'.decode(\"base64\")\n\nwith this:\n    ColorLookup = nuke.toNode('ColorLookup')     \n    if ColorLookup\['lut'].toScript() == blank:\n        messages.append(\"<font color='red'><strong>ERROR</strong></font> You haven't pressed the Analyse button yet!\")\n\n#########################\n\nclass BadThings(Exception): pass\n\ndef thingy():\n    with this:\n        ColorLookup = nuke.toNode('ColorLookup')\n        list = this\['lut'].toScript().replace('\}','').split('\\n')\n        for item in list\[1:-1]:\n            sample_value = 0\n            for value in item.split(' '):\n                try:\n                    value == float(value)\n                    if value < sample_value:\n                        raise BadThings(\"<font color='orange'><strong>WARNING</strong></font> Check and fix the response curves. Their slopes should always be positive (the curves should always go up &#8599;).\")\n                        \n                    else:\n                        sample_value = value\n                except ValueError:\n                    # Ignore non-numeric things like x-values of \"x5.46\" and channel names like \"red\{\" etc\n                    pass\ntry:\n    thingy()\nexcept BadThings as e:\n    messages.append(str(e))\n    \n#########################\n\nif this\['scatter'].value() == True:\n    if this\['box'].getValue() == \[100.0, 100.0, 500.0, 300.0]:\n        messages.append(\"<font color='orange'><strong>WARNING</strong></font> Scatter has been activated, but the sample box is still in its default position. Are you sure that's a good area to sample?\")\n\n#########################\n\nmessages.append(\"Did you copy/paste DasGrain from another script? Make sure to reanalyse and to reset the sample area if you are using scatter.\")\n\n#########################\n\nif len(messages) > 0:\n    nuke.message(\"<font size=\\\"5\\\">Things worth checking</font><br><br>\"\n                               \"%s<br><br><br>If any of this doesn't make sense to you, it might be worth checking out the video on vimeo.\" % (\n                                  \"<hr>\".join(\"%s: %s\" % (i+1, m) for i, m in enumerate(messages))))\n" +STARTLINE}
  addUserKnob {26 dont_despair l "" +STARTLINE T "<br>If it still doesn't work and you're about to flip the table, send me a <a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">mail</a>.<br>I'm happy to help! :)"}
  addUserKnob {20 Info_tab l Info}
- addUserKnob {26 dasname l "" +STARTLINE T "<font size='5'>DasGrain</font> v1.7.1<br>"}
+ addUserKnob {26 dasname l "" +STARTLINE T "<font size='5'>DasGrain</font> v1.7.2<br>"}
  addUserKnob {26 ""}
- addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-03-17\n"}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-03-22\n"}
  addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
  addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
- addUserKnob {26 testimonial l "" +STARTLINE T "<br><br><br><i>&laquo;Such an elegant solution, love it!&raquo;</i><br>&mdash; anonymous<br><br>"}
+ addUserKnob {26 testimonial l "" +STARTLINE T ""}
  addUserKnob {26 ""}
  addUserKnob {26 credit l "" +STARTLINE T "<br>VoronoiScatter based on Ivan Busquets' implementation of libNoise's\nVoronoi generator"}
  addUserKnob {26 website l "" +STARTLINE T "<a href=\"http://www.nukepedia.com/blink/image/voronoi/\"><span style=\"color:#C8C8C8;\">http://www.nukepedia.com/blink/image/voronoi/</a>"}
@@ -235,13 +235,13 @@ Group {
   xpos 1204
   ypos 258
  }
-set Nf296c00 [stack 0]
+set N76f0a800 [stack 0]
  Dot {
   name Dot26
   xpos 1204
   ypos 1074
  }
-set Nf296800 [stack 0]
+set N76f0a400 [stack 0]
  Dot {
   name Dot38
   xpos 1204
@@ -257,19 +257,19 @@ set Nf296800 [stack 0]
   xpos 544
   ypos 2079
  }
-set Nb1dbc00 [stack 0]
+set N76f21800 [stack 0]
  Dot {
   name Dot20
   xpos 544
   ypos 2199
  }
-push $Nb1dbc00
+push $N76f21800
  Dot {
   name Dot17
   xpos 434
   ypos 2079
  }
-set Nb1db400 [stack 0]
+set N76f21000 [stack 0]
  Dot {
   name Dot13
   xpos 214
@@ -310,20 +310,20 @@ set Nb1db400 [stack 0]
   xpos 764
   ypos -390
  }
-set N52fdc00 [stack 0]
+set N76f39800 [stack 0]
  Dot {
   name Dot28
   xpos 764
   ypos -198
  }
-set N52fd800 [stack 0]
+set N76f39400 [stack 0]
  Dot {
   name Dot32
   xpos 764
   ypos 234
  }
-set N52fd400 [stack 0]
-push $N52fd800
+set N76f39000 [stack 0]
+push $N76f39400
  Dot {
   name Dot27
   xpos 624
@@ -340,7 +340,7 @@ push $N52fd800
   xpos 624
   ypos -54
  }
-set N52fc800 [stack 0]
+set N76f38400 [stack 0]
  Input {
   inputs 0
   name PLATE
@@ -360,7 +360,7 @@ set N52fc800 [stack 0]
   xpos 324
   ypos -198
  }
-set N11b99c00 [stack 0]
+set N76f5d800 [stack 0]
  Dot {
   name Dot6
   xpos 464
@@ -395,7 +395,7 @@ set N11b99c00 [stack 0]
   xpos 464
   ypos 90
  }
-push $N52fc800
+push $N76f38400
  Merge2 {
   inputs 2
   operation plus
@@ -429,8 +429,8 @@ push $N52fc800
   xpos 624
   ypos 306
  }
-set N1991800 [stack 0]
-push $N52fd400
+set N76f8b400 [stack 0]
+push $N76f39000
  Merge2 {
   inputs 2
   operation from
@@ -448,14 +448,14 @@ push $N52fd400
   xpos 764
   ypos 522
  }
-set N1991000 [stack 0]
+set N76f8ac00 [stack 0]
  ColorLookup {
   channels rgb
   name ColorLookup
+  knobChanged "n = nuke.thisNode()\nk = nuke.thisKnob()\n\nif k.name() == 'lut':\n    nuke.toNode('ColorLookup1')\['lut'].fromScript(k.toScript())"
   xpos 730
   ypos 1304
  }
- set C1990c00 [stack 0]
  Dot {
   name Dot24
   xpos 764
@@ -472,13 +472,13 @@ set N1991000 [stack 0]
   xpos 400
   ypos 1550
  }
-push $N1991000
+push $N76f8ac00
  Dot {
   name Dot30
   xpos 544
   ypos 690
  }
-push $N11b99c00
+push $N76f5d800
  Merge2 {
   inputs 2
   operation from
@@ -495,7 +495,7 @@ push $N11b99c00
   xpos 324
   ypos 786
  }
-set Na55b800 [stack 0]
+set N5580d400 [stack 0]
  Dot {
   name Dot33
   xpos 324
@@ -517,7 +517,7 @@ set Na55b800 [stack 0]
   xpos 324
   ypos 1650
  }
-set Na55ac00 [stack 0]
+set N5580c800 [stack 0]
  Dot {
   name Dot25
   xpos 104
@@ -563,7 +563,7 @@ set Na55ac00 [stack 0]
    xpos 214
    ypos -750
   }
-set Nef5bc00 [stack 0]
+set N55833800 [stack 0]
   Dot {
    name Dot16
    xpos 434
@@ -579,13 +579,13 @@ set Nef5bc00 [stack 0]
    xpos 434
    ypos -606
   }
-set Nef5b000 [stack 0]
+set N55832c00 [stack 0]
   Dot {
    name Dot15
    xpos 654
    ypos -606
   }
-set Nef5ac00 [stack 0]
+set N55832800 [stack 0]
   Dot {
    name Dot7
    xpos 874
@@ -624,7 +624,7 @@ set Nef5ac00 [stack 0]
    xpos 874
    ypos -366
   }
-push $Nef5ac00
+push $N55832800
   BlinkScript {
    ProgramGroup 1
    KernelDescription "2 \"VoroNoise\" iterate pixelWise c117be128a07c11b6d82fd34148d66b3bcac41976ec9c2082affe38e890c2c0f 2 \"src\" Read Point \"dst\" Write Point 6 \"Frequency\" Float 1 AABIQg== \"Seed\" Int 1 AAAAAA== \"aspect ratio\" Float 1 AACAPw== \"width\" Int 1 AAAAAA== \"height\" Int 1 AAAAAA== \"Randomness\" Float 1 AAAAPw== 6 \"frequency\" 1 1 \"seed\" 1 1 \"aspect_ratio\" 1 1 \"width\" 1 1 \"height\" 1 1 \"randomness\" 1 1 0"
@@ -666,19 +666,19 @@ push $Nef5ac00
    xpos 654
    ypos -174
   }
-set Na26e800 [stack 0]
+set N55852400 [stack 0]
   Dot {
    name Dot12
    xpos 764
    ypos -174
   }
-set Na26e400 [stack 0]
+set N55852000 [stack 0]
   Dot {
    name Dot13
    xpos 764
    ypos 114
   }
-push $Na26e400
+push $N55852000
   Dot {
    name Dot8
    xpos 874
@@ -722,14 +722,14 @@ push $Na26e400
    xpos 874
    ypos 834
   }
-push $Na26e800
+push $N55852400
   NoTimeBlur {
    name NoTimeBlur3
    xpos 620
    ypos -82
   }
   Transform {
-   translate {{"floor((x * size) % 1 * (size)) - int(size / 2)"} {"floor(x % 1 * (size)) - int(size/2)""}}
+   translate {{"floor((x * size) % 1 * (size)) - int(size / 2)"} {"floor(x % 1 * (size)) - int(size/2)"}}
    filter Impulse
    black_outside false
    name Transform1
@@ -745,8 +745,8 @@ push $Na26e800
    xpos 654
    ypos 114
   }
-set N11451c00 [stack 0]
-push $Nef5b000
+set N558ad800 [stack 0]
+push $N55832c00
   Expression {
    expr0 "(x + .5) / width"
    expr1 "(y + .5) / height"
@@ -775,7 +775,7 @@ push $Nef5b000
    xpos 434
    ypos 282
   }
-push $N11451c00
+push $N558ad800
   Expression {
    temp_name0 view_index
    temp_expr0 "parent.parent.stereo == 1 ? \[lsearch \[value root.views] \[view]] / 2 : 0"
@@ -784,7 +784,6 @@ push $N11451c00
    channel2 none
    channel3 none
    name Expression3
-   selected true
    xpos 620
    ypos 182
    addUserKnob {20 User}
@@ -837,7 +836,7 @@ push $N11451c00
    xpos 654
    ypos 426
   }
-push $Nef5bc00
+push $N55833800
   FrameHold {
    first_frame {{parent.sample_frame}}
    name FrameHold1
@@ -858,9 +857,9 @@ push $Nef5bc00
    xpos 180
    ypos 422
   }
-set Nce75400 [stack 0]
+set N558e1000 [stack 0]
   TimeBlur {
-   divisions {{"max(Transform1.size == 1 ? 2 : pow2(Transform1.size), 1)""}}
+   divisions {{"max(Transform1.size == 1 ? 2 : pow2(Transform1.size), 1)"}}
    shutter 1
    shuttercustomoffset {{"1 / divisions / 2"}}
    name TimeBlur1
@@ -868,8 +867,8 @@ set Nce75400 [stack 0]
    ypos 518
    disable {{"parent.edge_blend_size < 1"}}
   }
-set Nce75000 [stack 0]
-push $Nce75400
+set N558e0c00 [stack 0]
+push $N558e1000
   Dot {
    name Dot1
    xpos -6
@@ -911,7 +910,7 @@ push $Nce75400
    xpos -6
    ypos 738
   }
-push $Nce75000
+push $N558e0c00
   Grade {
    inputs 1+1
    white 1.4
@@ -960,8 +959,8 @@ push $Nce75000
   xpos 104
   ypos 2199
  }
-push $Nb1db400
-push $Na55ac00
+push $N76f21000
+push $N5580c800
  Multiply {
   inputs 1+1
   channels rgb
@@ -990,14 +989,14 @@ push $Na55ac00
   xpos 324
   ypos 2298
  }
-set Nc2b1400 [stack 0]
-push $Nf296c00
+set N5593d000 [stack 0]
+push $N76f0a800
  Dot {
   name Dot40
   xpos 874
   ypos 258
  }
-push $N1991800
+push $N76f8b400
  Dot {
   name Dot34
   xpos 624
@@ -1032,7 +1031,7 @@ push $N1991800
   xpos 984
   ypos -390
  }
-set N9f03c00 [stack 0]
+set N55965800 [stack 0]
  Merge2 {
   inputs 2
   operation from
@@ -1050,11 +1049,12 @@ set N9f03c00 [stack 0]
   xpos 984
   ypos 2466
  }
-set N9f03400 [stack 0]
-clone $C1990c00 {
+set N55965000 [stack 0]
+ ColorLookup {
+  channels rgb
+  name ColorLookup1
   xpos 730
   ypos 2462
-  selected false
  }
  Multiply {
   channels rgb
@@ -1079,7 +1079,7 @@ clone $C1990c00 {
   xpos 324
   ypos 2658
  }
-push $N9f03400
+push $N55965000
  Merge2 {
   inputs 2
   operation plus
@@ -1096,7 +1096,7 @@ push $N9f03400
   xpos 984
   ypos 2826
  }
-set N8ad1c00 [stack 0]
+set N55993800 [stack 0]
  OCIOColorSpace {
   in_colorspace {{OCIOColorSpace1.out_colorspace}}
   out_colorspace {{OCIOColorSpace1.in_colorspace}}
@@ -1109,13 +1109,13 @@ set N8ad1c00 [stack 0]
   xpos 984
   ypos 2970
  }
-set N8ad1400 [stack 0]
+set N55993000 [stack 0]
  Dot {
   name Dot41
   xpos 1204
   ypos 2970
  }
-set N8ad1000 [stack 0]
+set N55992c00 [stack 0]
  Dot {
   name Dot36
   xpos 1314
@@ -1128,7 +1128,7 @@ set N8ad1000 [stack 0]
   xpos 1280
   ypos 3062
  }
-push $N8ad1000
+push $N55992c00
  Merge2 {
   inputs 2
   operation difference
@@ -1152,13 +1152,13 @@ push $N8ad1000
   xpos 1204
   ypos 3210
  }
-push $N9f03c00
+push $N55965800
  Dot {
   name Dot45
   xpos 1424
   ypos -390
  }
-push $N8ad1c00
+push $N55993800
  Merge2 {
   inputs 2
   operation from
@@ -1174,7 +1174,7 @@ push $N8ad1c00
   xpos 1424
   ypos 3330
  }
-push $Nc2b1400
+push $N5593d000
  Dot {
   name Dot14
   xpos 104
@@ -1185,13 +1185,13 @@ push $Nc2b1400
   xpos 104
   ypos 3210
  }
-push $N52fdc00
+push $N76f39800
  Dot {
   name Dot47
   xpos -556
   ypos -390
  }
-push $N11b99c00
+push $N76f5d800
  Merge2 {
   inputs 2
   operation from
@@ -1207,7 +1207,7 @@ push $N11b99c00
   xpos -556
   ypos 3330
  }
-push $N8ad1400
+push $N55993000
  Switch {
   inputs 5
   which {{output}}
@@ -1222,21 +1222,21 @@ push $N8ad1400
   xpos 950
   ypos 3662
  }
-push $Nf296800
+push $N76f0a400
  Invert {
   name Invert2
   xpos 180
   ypos 1064
   disable {{!parent.invert_1}}
  }
-push $Na55b800
+push $N5580d400
  Dot {
   name Dot5
   xpos 104
   ypos 786
  }
-set N11672c00 [stack 0]
-push $N11672c00
+set N559d8800 [stack 0]
+push $N559d8800
  Copy {
   inputs 2
   from0 {{{parent.Copy2.from0}}}
@@ -1255,8 +1255,8 @@ push $N11672c00
   xpos 70
   ypos 926
  }
-set N11672400 [stack 0]
-push $N1991000
+set N559d8000 [stack 0]
+push $N76f8ac00
  Colorspace {
   colorspace_out AlexaV3LogC
   name Colorspace5
@@ -1274,14 +1274,14 @@ push $N1991000
   xpos -116
   ypos 522
  }
-set N59a7800 [stack 0]
+set N55a05400 [stack 0]
  Dot {
   name Dot48
   xpos -116
   ypos 786
  }
-set N59a7400 [stack 0]
-push $N59a7400
+set N55a05000 [stack 0]
+push $N55a05000
  Copy {
   inputs 2
   from0 rgba.blue
@@ -1314,7 +1314,7 @@ push $N59a7400
   xpos -40
   ypos 985
  }
-push $N11672400
+push $N559d8000
  Copy {
   inputs 2
   from0 rgba.alpha
@@ -1363,7 +1363,7 @@ push $N11672400
   xpos 70
   ypos 1280
  }
-push $N59a7800
+push $N55a05400
  Dot {
   name Dot16
   xpos -336
