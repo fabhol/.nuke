@@ -1,0 +1,252 @@
+set cut_paste_input [stack 0]
+version 11.3 v3
+push $cut_paste_input
+Group {
+ name iBlur
+ knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\n\n\nif knob.name() == 'operation':\n        node.knobs()\['filter'].setVisible(knob.value() == 'blur')\n        node.knobs()\['quality'].setVisible(knob.value() == 'blur')\n        node.knobs()\['crop'].setVisible(knob.value() == 'blur')\n        node.knobs()\['quality_1'].setVisible(knob.value() == 'defocus')\n        node.knobs()\['method'].setVisible(knob.value() == 'defocus')"
+ tile_color 0x7f7f7fff
+ addUserKnob {20 iBlurTab l iBlur}
+ addUserKnob {41 channels T Dissolve1.channels}
+ addUserKnob {83 operation M {blur defocus}}
+ addUserKnob {14 size R 0 100}
+ addUserKnob {41 ratio l "aspect ratio" t "multiplier for size.w" T Defocus.ratio}
+ addUserKnob {41 filter T Blur.filter}
+ addUserKnob {41 quality l "" -STARTLINE T Blur.quality}
+ addUserKnob {41 crop l "crop to format" -STARTLINE T Blur.crop}
+ addUserKnob {41 quality_1 l quality -STARTLINE +HIDDEN T Defocus.quality}
+ addUserKnob {41 method -STARTLINE +HIDDEN T Defocus.method}
+ addUserKnob {26 _1 l "" +STARTLINE}
+ addUserKnob {41 effect_mask l "effect mask" t "gets clamped to 0-1" T Copy7.from0}
+ addUserKnob {6 invert_effect_mask l invert -STARTLINE}
+ addUserKnob {3 slices t "How many slices the effect mask gets divided into. The more slices the smoother the transition at the cost of speed." -STARTLINE}
+ slices 10
+ addUserKnob {26 "" l mask T ""}
+ addUserKnob {41 maskChannelMask l "" -STARTLINE T Dissolve1.maskChannelMask}
+ addUserKnob {41 invert_mask l invert -STARTLINE T Dissolve1.invert_mask}
+ addUserKnob {41 mix T Dissolve1.which}
+ addUserKnob {20 Info_tab l Info}
+ addUserKnob {26 dasname l "" +STARTLINE T "<font size='5'>iBlur</font> v1.0<br>"}
+ addUserKnob {26 what l "" +STARTLINE T "Does what you'd expect, the effect mask controls the size."}
+ addUserKnob {26 divider l "" +STARTLINE}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-04-10"}
+ addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
+ addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
+}
+ Input {
+  inputs 0
+  name mask
+  xpos -1800
+  ypos 1214
+  number 1
+ }
+ Dot {
+  name Dot1
+  xpos -1766
+  ypos 1338
+ }
+ Input {
+  inputs 0
+  name effect_mask
+  xpos -700
+  ypos 494
+  number 2
+ }
+set N3e1f5c00 [stack 0]
+push $N3e1f5c00
+ Copy {
+  inputs 2
+  to0 rgba.alpha
+  name Copy7
+  xpos -700
+  ypos 608
+ }
+ Invert {
+  name Invert1
+  xpos -700
+  ypos 680
+  disable {{!parent.invert_effect_mask}}
+ }
+ Grade {
+  channels alpha
+  gamma {{parent.detour.gamma}}
+  enable_mix_luminance false
+  name Grade2
+  xpos -700
+  ypos 752
+ }
+ NoTimeBlur {
+  name NoTimeBlur2
+  xpos -700
+  ypos 830
+ }
+ Expression {
+  temp_name0 band_target
+  temp_expr0 detour.band_target
+  temp_name1 band_width
+  temp_expr1 detour.band_width
+  channel0 alpha
+  expr0 clamp(-(abs(clamp(a)-band_target)-band_width/2)/band_width*2)
+  channel1 none
+  channel2 none
+  channel3 none
+  name Expression1
+  selected true
+  xpos -700
+  ypos 902
+ }
+ Dot {
+  name Dot5
+  xpos -666
+  ypos 1002
+ }
+ Input {
+  inputs 0
+  name Input
+  xpos -1580
+  ypos 105
+ }
+ Dot {
+  name Dot12
+  xpos -1546
+  ypos 234
+ }
+set N3a6ea400 [stack 0]
+ Dot {
+  name Dot2
+  xpos -1106
+  ypos 234
+ }
+ NoTimeBlur {
+  name NoTimeBlur1
+  xpos -1140
+  ypos 350
+ }
+ Dot {
+  name Dot19
+  xpos -1106
+  ypos 498
+ }
+set N3dbe7c00 [stack 0]
+ Dot {
+  name Dot18
+  xpos -1326
+  ypos 498
+ }
+ Defocus {
+  scale {{max(detour.size_base*abs(parent.size.w),1e-99)} {max(detour.size_base*abs(parent.size.h),1e-99)}}
+  name Defocus
+  xpos -1360
+  ypos 656
+ }
+ Dot {
+  name Dot25
+  xpos -1326
+  ypos 834
+ }
+push $N3dbe7c00
+ Blur {
+  size {{detour.size_base*abs(parent.size.w)*Defocus.ratio} {detour.size_base*abs(parent.size.h)}}
+  name Blur
+  xpos -1140
+  ypos 656
+ }
+ Switch {
+  inputs 2
+  which {{parent.operation}}
+  name Switch1
+  xpos -1140
+  ypos 830
+ }
+ Dot {
+  name Dot30
+  xpos -1106
+  ypos 930
+ }
+set N3f3f8400 [stack 0]
+ Dot {
+  name Dot11
+  xpos -886
+  ypos 930
+ }
+ Multiply {
+  inputs 1+1
+  value 0
+  invert_mask true
+  name Multiply3
+  xpos -920
+  ypos 992
+ }
+ TimeBlur {
+  divisions {{detour.slices}}
+  shutter 1
+  shutteroffset start
+  shuttercustomoffset 0
+  name TimeBlur1
+  xpos -920
+  ypos 1070
+ }
+ Multiply {
+  value {{parent.slices}}
+  name Multiply2
+  xpos -920
+  ypos 1123
+ }
+ Dot {
+  name Dot24
+  xpos -886
+  ypos 1194
+ }
+push $N3f3f8400
+ TimeWarp {
+  lookup {{x+1/parent.slices*(parent.slices-1)}}
+  time ""
+  filter none
+  name TimeWarp1
+  xpos -1140
+  ypos 1070
+ }
+ Switch {
+  inputs 2
+  which {{"\[exists parent.input2.name] && Copy7.from0 > 0"}}
+  name Switch4
+  xpos -1140
+  ypos 1190
+ }
+ Dot {
+  name Dot10
+  xpos -1106
+  ypos 1339
+ }
+push $N3a6ea400
+ Dissolve {
+  inputs 2+1
+  which 1
+  maskChannelMask none
+  name Dissolve1
+  xpos -1580
+  ypos 1328
+  disable {{detour.slices<=1}}
+ }
+ Output {
+  name Output1
+  xpos -1580
+  ypos 1454
+ }
+ NoOp {
+  inputs 0
+  name detour
+  xpos -920
+  ypos 494
+  addUserKnob {20 User}
+  addUserKnob {3 slices}
+  slices {{parent.slices}}
+  addUserKnob {7 gamma R 0 5}
+  gamma 2
+  addUserKnob {7 size_base l "size base"}
+  size_base {{pow(x%1/(slices-1)*slices,gamma)}}
+  addUserKnob {7 band_target l "band target"}
+  band_target {{(x%1)/(slices-1)*slices}}
+  addUserKnob {7 band_width l "band width"}
+  band_width {{1/(slices-1)*2}}
+ }
+end_group
