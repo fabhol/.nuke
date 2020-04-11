@@ -13,7 +13,7 @@ Group {
  addUserKnob {41 filter T Blur.filter}
  addUserKnob {41 quality l "" -STARTLINE T Blur.quality}
  addUserKnob {41 crop l "crop to format" -STARTLINE T Blur.crop}
- addUserKnob {41 quality_1 l quality -STARTLINE +HIDDEN T Defocus.quality}
+ addUserKnob {41 quality_1 l quality +HIDDEN T Defocus.quality}
  addUserKnob {41 method -STARTLINE +HIDDEN T Defocus.method}
  addUserKnob {26 _1 l "" +STARTLINE}
  addUserKnob {41 effect_mask l "effect mask" t "gets clamped to 0-1" T Copy7.from0}
@@ -25,10 +25,10 @@ Group {
  addUserKnob {41 invert_mask l invert -STARTLINE T Dissolve1.invert_mask}
  addUserKnob {41 mix T Dissolve1.which}
  addUserKnob {20 Info_tab l Info}
- addUserKnob {26 dasname l "" +STARTLINE T "<font size='5'>iBlur</font> v1.0<br>"}
+ addUserKnob {26 dasname l "" +STARTLINE T "<font size='5'>iBlur</font> v1.0.1<br>"}
  addUserKnob {26 what l "" +STARTLINE T "Does what you'd expect, the effect mask controls the size."}
  addUserKnob {26 divider l "" +STARTLINE}
- addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-04-10"}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-04-11"}
  addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
  addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
 }
@@ -51,8 +51,8 @@ Group {
   ypos 494
   number 2
  }
-set N3e1f5c00 [stack 0]
-push $N3e1f5c00
+set N5021000 [stack 0]
+push $N5021000
  Copy {
   inputs 2
   to0 rgba.alpha
@@ -110,7 +110,7 @@ push $N3e1f5c00
   xpos -1546
   ypos 234
  }
-set N3a6ea400 [stack 0]
+set N634d000 [stack 0]
  Dot {
   name Dot2
   xpos -1106
@@ -126,7 +126,7 @@ set N3a6ea400 [stack 0]
   xpos -1106
   ypos 498
  }
-set N3dbe7c00 [stack 0]
+set N634c400 [stack 0]
  Dot {
   name Dot18
   xpos -1326
@@ -143,7 +143,7 @@ set N3dbe7c00 [stack 0]
   xpos -1326
   ypos 834
  }
-push $N3dbe7c00
+push $N634c400
  Blur {
   size {{detour.size_base*abs(parent.size.w)*Defocus.ratio} {detour.size_base*abs(parent.size.h)}}
   name Blur
@@ -162,7 +162,7 @@ push $N3dbe7c00
   xpos -1106
   ypos 930
  }
-set N3f3f8400 [stack 0]
+set N636cc00 [stack 0]
  Dot {
   name Dot11
   xpos -886
@@ -196,7 +196,7 @@ set N3f3f8400 [stack 0]
   xpos -886
   ypos 1194
  }
-push $N3f3f8400
+push $N636cc00
  TimeWarp {
   lookup {{x+1/parent.slices*(parent.slices-1)}}
   time ""
@@ -217,7 +217,7 @@ push $N3f3f8400
   xpos -1106
   ypos 1339
  }
-push $N3a6ea400
+push $N634d000
  Dissolve {
   inputs 2+1
   which 1
