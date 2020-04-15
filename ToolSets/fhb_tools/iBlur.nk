@@ -25,10 +25,10 @@ Group {
  addUserKnob {41 invert_mask l invert -STARTLINE T Dissolve1.invert_mask}
  addUserKnob {41 mix T Dissolve1.which}
  addUserKnob {20 Info_tab l Info}
- addUserKnob {26 dasname l "" +STARTLINE T "<font size='5'>iBlur</font> v1.0.1<br>"}
+ addUserKnob {26 dasname l "" +STARTLINE T "<font size='5'>iBlur</font> v1.1<br>"}
  addUserKnob {26 what l "" +STARTLINE T "Does what you'd expect, the effect mask controls the size."}
  addUserKnob {26 divider l "" +STARTLINE}
- addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-04-11"}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-04-12"}
  addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
  addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
 }
@@ -51,8 +51,8 @@ Group {
   ypos 494
   number 2
  }
-set N5021000 [stack 0]
-push $N5021000
+set N8f83a000 [stack 0]
+push $N8f83a000
  Copy {
   inputs 2
   to0 rgba.alpha
@@ -85,12 +85,11 @@ push $N5021000
   temp_name1 band_width
   temp_expr1 detour.band_width
   channel0 alpha
-  expr0 clamp(-(abs(clamp(a)-band_target)-band_width/2)/band_width*2)
+  expr0 "1 - clamp(-(abs(clamp(a) - band_target) - band_width / 2) / band_width * 2)"
   channel1 none
   channel2 none
   channel3 none
   name Expression1
-  selected true
   xpos -700
   ypos 902
  }
@@ -110,7 +109,7 @@ push $N5021000
   xpos -1546
   ypos 234
  }
-set N634d000 [stack 0]
+set Nbfc90800 [stack 0]
  Dot {
   name Dot2
   xpos -1106
@@ -126,14 +125,14 @@ set N634d000 [stack 0]
   xpos -1106
   ypos 498
  }
-set N634c400 [stack 0]
+set Nbfc91c00 [stack 0]
  Dot {
   name Dot18
   xpos -1326
   ypos 498
  }
  Defocus {
-  scale {{max(detour.size_base*abs(parent.size.w),1e-99)} {max(detour.size_base*abs(parent.size.h),1e-99)}}
+  scale {{"max(detour.size_base * abs(parent.size.w) , 1e-99)"} {"max(detour.size_base * abs(parent.size.h) , 1e-99)"}}
   name Defocus
   xpos -1360
   ypos 656
@@ -143,9 +142,9 @@ set N634c400 [stack 0]
   xpos -1326
   ypos 834
  }
-push $N634c400
+push $Nbfc91c00
  Blur {
-  size {{detour.size_base*abs(parent.size.w)*Defocus.ratio} {detour.size_base*abs(parent.size.h)}}
+  size {{"detour.size_base * abs(parent.size.w) * Defocus.ratio"} {"detour.size_base * abs(parent.size.h)"}}
   name Blur
   xpos -1140
   ypos 656
@@ -162,7 +161,7 @@ push $N634c400
   xpos -1106
   ypos 930
  }
-set N636cc00 [stack 0]
+set Nbfcb0800 [stack 0]
  Dot {
   name Dot11
   xpos -886
@@ -171,7 +170,6 @@ set N636cc00 [stack 0]
  Multiply {
   inputs 1+1
   value 0
-  invert_mask true
   name Multiply3
   xpos -920
   ypos 992
@@ -196,7 +194,7 @@ set N636cc00 [stack 0]
   xpos -886
   ypos 1194
  }
-push $N636cc00
+push $Nbfcb0800
  TimeWarp {
   lookup {{x+1/parent.slices*(parent.slices-1)}}
   time ""
@@ -217,7 +215,7 @@ push $N636cc00
   xpos -1106
   ypos 1339
  }
-push $N634d000
+push $Nbfc90800
  Dissolve {
   inputs 2+1
   which 1
@@ -225,7 +223,7 @@ push $N634d000
   name Dissolve1
   xpos -1580
   ypos 1328
-  disable {{detour.slices<=1}}
+  disable {{"detour.slices <= 1"}}
  }
  Output {
   name Output1
@@ -243,10 +241,10 @@ push $N634d000
   addUserKnob {7 gamma R 0 5}
   gamma 2
   addUserKnob {7 size_base l "size base"}
-  size_base {{pow(x%1/(slices-1)*slices,gamma)}}
+  size_base {{"pow(x % 1 / (slices - 1) * slices , gamma)"}}
   addUserKnob {7 band_target l "band target"}
-  band_target {{(x%1)/(slices-1)*slices}}
+  band_target {{"(x % 1) / (slices - 1) * slices"}}
   addUserKnob {7 band_width l "band width"}
-  band_width {{1/(slices-1)*2}}
+  band_width {{"1 / (slices - 1) * 2"}}
  }
 end_group
