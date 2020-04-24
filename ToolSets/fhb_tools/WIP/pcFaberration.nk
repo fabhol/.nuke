@@ -4,7 +4,7 @@ push $cut_paste_input
 Group {
  name pcFaberration
  onCreate "n = nuke.thisNode()\nn\['focus_error'].setFlag(nuke.NO_ANIMATION)\nn\['offset'].setFlag(nuke.NO_ANIMATION)"
- knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\n\ndef copy_values():\n    focus_error = node\['focus_error'].value()\n    list = \[focus_error\[0], focus_error\[1], focus_error\[2],0]    \n    offset = node\['offset'].value()\n    new_curve = 'curve \{curve l x0.315 %s x0.525 %s x0.82 %s\}' % (list\[0] + offset, list\[1] + offset, list\[2] + offset)\n    with node:\n        n = nuke.toNode('Curve')\n        n\['lut'].fromScript(new_curve)\n        n\['helper'].setValue(n\['helper'].value() == False)\n\nif knob.name() in \['focus_error', 'offset']:\n    copy_values()\n\nif knob.name() == 'helper':\n    if knob.value() is True:\n        copy_values()\n        node\['focus_error'].setEnabled(True)\n        node\['offset'].setEnabled(True)"
+ knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\n\ndef copy_values():\n    focus_error = node\['focus_error'].value()\n    list = \[focus_error\[0], focus_error\[1], focus_error\[2],0]    \n    offset = node\['offset'].value()\n    new_curve = 'curve \{curve l x0.25 %s x0.5 %s x0.75 %s\}' % (list\[0] + offset, list\[1] + offset, list\[2] + offset)\n    with node:\n        n = nuke.toNode('Curve')\n        n\['lut'].fromScript(new_curve)\n        n\['helper'].setValue(n\['helper'].value() == False)\n\nif knob.name() in \['focus_error', 'offset']:\n    copy_values()\n\nif knob.name() == 'helper':\n    if knob.value() is True:\n        copy_values()\n        node\['focus_error'].setEnabled(True)\n        node\['offset'].setEnabled(True)"
  tile_color 0x7f7f7fff
  label "\[value _label_str]"
  note_font Verdana
@@ -23,19 +23,18 @@ Group {
  addUserKnob {20 endGroup_1 l endGroup n -1}
  addUserKnob {26 divider01 l " "}
  addUserKnob {18 focus_error l "focus error" t "Controls the curve on the basis of the focus error of each channel. Look at the curve below to see how the values affect it.\nFor the initial setting you can try to pick the chromatic aberration of the plate by dragging the sample area over a neutral, high contrast aberrated edge. Then adjust the multiply value below until the effect matches the plate. Depending on which 'side' you picked, you might have to invert the effect." R -1 1}
- focus_error {0.2 0 -0.2}
+ focus_error {-0.1 0 0.3}
  addUserKnob {7 offset t "Global scale offset. Adjust to prevent stretched or black pixels at the edge of the format." R -1 1}
  addUserKnob {6 helper t "checker to indicate whether the rgb control knobs are disabled or not" +INVISIBLE +STARTLINE}
  helper true
  addUserKnob {20 curve n 1}
- curve 0
  addUserKnob {41 lut l "" +STARTLINE T Curve.lut}
  addUserKnob {22 reset l "reset curve to rgb values" T "node = nuke.thisNode()\nnode\['helper'].setValue(True)" +STARTLINE}
  addUserKnob {22 whatsthis l "What am I looking at?" -STARTLINE T "nuke.message(\"\"\"The x-axis the visible spectrum (red - green - blue), while the y-axis represents the focus error (which is essentially a scale). This means that the curve controls the scale for every color in the spectrum individually.\"\"\")"}
  addUserKnob {26 divider02 l " "}
  addUserKnob {20 endGroup n -1}
  addUserKnob {14 multiply t "Multiply of the effect." R 0 10}
- multiply 10
+ multiply 5
  addUserKnob {7 multiply_style l "multiply style*" t "This only makes a difference if the multiply has different values in width and height.\n\n0 will affect the width/height component directly, changing the direction of the blur, while 1 won't change the direction but the length of the blur.\n\nTry it out with vectors enabled to see the difference.\n\n<strong>*When the multiply values for width and height are not the same, any value other than 0 causes an internal switch from Transform to STMap, which reduces the speed significantly."}
  multiply_style 1
  addUserKnob {7 weighting l weighting* t "Controls the increase of the effect from the center to the corners.\n1: The effect increases linearly\n<1: slower increase first, then quicker towards the edge\n>1: quicker increase first and then slower towards the edge\n\n<strong>Any value other than 1 causes an internal switch from Transform to STMap, which reduces the speed significantly." R 0.2 2}
@@ -365,15 +364,15 @@ add_layer {correct_values correct_values.red correct_values.green correct_values
   ypos 1184
  }
  Multiply {
-  value {{"lerp(luminance, spectrum.r, parent.saturation)" i} {"lerp(luminance, spectrum.g, parent.saturation)" i} {"lerp(luminance, spectrum.b, parent.saturation)" i} 0}
+  value {{"lerp(luminance, spectrum.r, parent.saturation)"} {"lerp(luminance, spectrum.g, parent.saturation)"} {"lerp(luminance, spectrum.b, parent.saturation)"} 0}
   name Multiply1
   xpos -1140
   ypos 1267
   addUserKnob {20 User}
   addUserKnob {18 spectrum}
-  spectrum {{clamp(ColorLookup1.lut.red(x%1))} {clamp(ColorLookup1.lut.green(x%1))} {clamp(ColorLookup1.lut.blue(x%1))}}
+  spectrum {{Spectrum.lut.red(x%1)} {Spectrum.lut.green(x%1)} {Spectrum.lut.blue(x%1)}}
   addUserKnob {7 luminance}
-  luminance {{spectrum.r*0.2126+spectrum.g*0.7152+spectrum.b*0.0722 i}}
+  luminance {{spectrum.r*0.2126+spectrum.g*0.7152+spectrum.b*0.0722}}
  }
  TimeBlur {
   divisions {{parent.samples}}
@@ -470,7 +469,6 @@ set Nb6057400 [stack 0]
    channel2 none
    channel3 none
    name min
-   selected true
    xpos 180
    ypos 206
   }
@@ -606,7 +604,7 @@ push $Nb0cabc00
  }
  TimeDissolve {
   inputs 0
-  lut {curve {curve l x0.3149999976 0.2 x0.5249999762 0 x0.8199999928 -0.2}}
+  lut {curve {curve l x0.25 -0.1 x0.5 0 0.3}}
   name Curve
   knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\nparent = nuke.thisParent()\n\nif knob.name() == 'lut':\n    if parent\['helper'].value() is True:\n        parent\['focus_error'].setEnabled(False)\n        parent\['offset'].setEnabled(False)\n        parent\['helper'].setValue(False)"
   xpos -1030
@@ -614,16 +612,16 @@ push $Nb0cabc00
   hide_input true
   addUserKnob {20 User}
   addUserKnob {6 helper +STARTLINE}
+  helper true
  }
  ColorLookup {
   inputs 0
   lut {master {}
-    red {curve C k 0 s0 v1.357142687 x0.3149999976 1 s0 x0.5849999785 0 s0 x0.7474999428 0 s0 x0.8500000238 0.0475 s-0 u1.705189586 x1 0 s0}
-    green {curve C k 0 s0 x0.25 0 s0 x0.5249999762 0.6 s0 x0.8450000286 0 s0 u1.300781727 x1 0 s0}
-    blue {curve C k 0 s0 x0.4799999893 0 s0 v1.838067293 x0.8199999928 0.68 s0 x1 0 s0 u1.716146827}
+    red {curve L 0 x0.25 1 0}
+    green {curve L x0.25 0 x0.5 1 0}
+    blue {curve L x0.5 0 x0.75 1 0}
     alpha {}}
-  name ColorLookup1
-  selected true
+  name Spectrum
   xpos -1020
   ypos 1274
  }
