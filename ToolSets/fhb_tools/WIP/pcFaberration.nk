@@ -3,55 +3,55 @@ version 11.3 v3
 push $cut_paste_input
 Group {
  name pcFaberration
- onCreate "n = nuke.thisNode()\nn\['focus_error'].setFlag(nuke.NO_ANIMATION)\nn\['offset'].setFlag(nuke.NO_ANIMATION)"
- knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\n\ndef copy_values():\n    focus_error = node\['focus_error'].value()\n    list = \[focus_error\[0], focus_error\[1], focus_error\[2],0]    \n    offset = node\['offset'].value()\n    new_curve = 'curve \{curve l x0.25 %s x0.5 %s x0.75 %s\}' % (list\[0] + offset, list\[1] + offset, list\[2] + offset)\n    with node:\n        n = nuke.toNode('Curve')\n        n\['lut'].fromScript(new_curve)\n        n\['helper'].setValue(n\['helper'].value() == False)\n\nif knob.name() in \['focus_error', 'offset']:\n    copy_values()\n\nif knob.name() == 'helper':\n    if knob.value() is True:\n        copy_values()\n        node\['focus_error'].setEnabled(True)\n        node\['offset'].setEnabled(True)"
+ onCreate "n = nuke.thisNode()\nfor k in \['focus_error', 'offset', 'red_peak', 'green_peak', 'blue_peak']:\n    n\[k].setFlag(nuke.NO_ANIMATION)\nn.knob(\"lut\").delCurve(\"alpha\")"
+ knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\n\ndef copy_values():\n    with node:\n        Spectrum = nuke.toNode('Spectrum')\n    red_peak = Spectrum\['red_peak'].value()\n    green_peak = Spectrum\['green_peak'].value()\n    blue_peak = Spectrum\['blue_peak'].value()\n    focus_error = node\['focus_error'].value()\n    offset = node\['offset'].value()\n    list = \[red_peak, focus_error\[0] + offset, green_peak, focus_error\[1] + offset, blue_peak, focus_error\[2] + offset]\n    new_curve = 'curve \{curve l x%s %s x%s %s x%s %s\}' % (list\[0], list\[1], list\[2], list\[3], list\[4], list\[5])\n    with node:\n        n = nuke.toNode('Curve')\n        n\['lut'].fromScript(new_curve)\n        n\['helper'].setValue(n\['helper'].value() == False)\n\nif knob.name() in \['focus_error', 'offset']:\n    copy_values()\n\nif knob.name() == 'helper':\n    if knob.value() is True:\n        copy_values()\n        for k in \['focus_error', 'offset']:\n            node\[k].setEnabled(True)\n        parent\['reset'].setEnabled(False)"
  tile_color 0x7f7f7fff
  label "\[value _label_str]"
  note_font Verdana
- addUserKnob {20 FaberrationTab l Faberration}
+ addUserKnob {20 Faberration_tab l Faberration}
  addUserKnob {4 output l mode t "Choose the layers that you want to affect.\n\nRGB: Only affects the RGB layer\n\nRGB + pc_alpha: Affects RGB and the per channel alpha layer. Select this mode, if you want to merge the result over a background. This only works with a pcMerge.\n\npc_alpha: Only affect the per channel alpha layer. Select this mode if your RGB channels already have chromatic aberration (for example objects from the plate), and you want to merge them on top of a background with a pcMerge.\nIn this case the RGB layer should not be premultiplied yet. Tick the 'premult RGB' check box in the pcMerge instead." M {RGB "RGB + pc_alpha" pc_alpha "" "" "" "" "" "" "" "" "" "" "" ""}}
  addUserKnob {41 alpha_operation l " alpha" t "There is no way of retaining a correct alpha channel after seperately processing the RGB channels. This lets you generate a new alpha based on the pc_alpha layer.\n\n<b>original</b>: the original alpha is piped through\n<b>average</b>/<b>max</b>/<b>min</b>: average/max/min of the three pc_alpha channels\n<b>luminance</b>: luminance of the pc_alpha using the Rec. 709 luma coefficients" -STARTLINE T GenerateAlpha.operation}
  addUserKnob {20 vectors n 1}
  vectors 0
  addUserKnob {6 overlay_vectors l "overlay vectors" t "Overlays vectors over the image to better show the effect." +STARTLINE}
+ overlay_vectors true
  addUserKnob {3 res}
  res 20
  addUserKnob {78 size n 1}
- size 2
+ size 1
  addUserKnob {78 brightness n 1}
- brightness 10
+ brightness 5
  addUserKnob {20 endGroup_1 l endGroup n -1}
  addUserKnob {26 divider01 l " "}
  addUserKnob {18 focus_error l "focus error" t "Controls the curve on the basis of the focus error of each channel. Look at the curve below to see how the values affect it.\nFor the initial setting you can try to pick the chromatic aberration of the plate by dragging the sample area over a neutral, high contrast aberrated edge. Then adjust the multiply value below until the effect matches the plate. Depending on which 'side' you picked, you might have to invert the effect." R -1 1}
- focus_error {-0.1 0 0.3}
+ focus_error {-0.15 0 0.15}
  addUserKnob {7 offset t "Global scale offset. Adjust to prevent stretched or black pixels at the edge of the format." R -1 1}
  addUserKnob {6 helper t "checker to indicate whether the rgb control knobs are disabled or not" +INVISIBLE +STARTLINE}
  helper true
- addUserKnob {20 curve n 1}
+ addUserKnob {20 curves n 1}
+ curves 0
+ addUserKnob {22 whatsthis l "What am I looking at?" T "nuke.message(\"\"\"The x-axis represents a simplified visible spectrum (red - green - blue, from 0 to 1), while the y-axis represents the focus error (which is essentially a scale). This means that the curve controls the scale for every color in the spectrum individually.\n\nEither control the curve with the focus error and offset knobs, or by manipulating it directly.\"\"\")" +STARTLINE}
+ addUserKnob {22 reset l "reset master curve to focus error values" -STARTLINE +DISABLED T "node = nuke.thisNode()\nnode\['helper'].setValue(True)"}
  addUserKnob {41 lut l "" +STARTLINE T Curve.lut}
- addUserKnob {22 reset l "reset curve to rgb values" T "node = nuke.thisNode()\nnode\['helper'].setValue(True)" +STARTLINE}
- addUserKnob {22 whatsthis l "What am I looking at?" -STARTLINE T "nuke.message(\"\"\"The x-axis the visible spectrum (red - green - blue), while the y-axis represents the focus error (which is essentially a scale). This means that the curve controls the scale for every color in the spectrum individually.\"\"\")"}
- addUserKnob {26 divider02 l " "}
  addUserKnob {20 endGroup n -1}
  addUserKnob {14 multiply t "Multiply of the effect." R 0 10}
- multiply 5
- addUserKnob {7 multiply_style l "multiply style*" t "This only makes a difference if the multiply has different values in width and height.\n\n0 will affect the width/height component directly, changing the direction of the blur, while 1 won't change the direction but the length of the blur.\n\nTry it out with vectors enabled to see the difference.\n\n<strong>*When the multiply values for width and height are not the same, any value other than 0 causes an internal switch from Transform to STMap, which reduces the speed significantly."}
- multiply_style 1
- addUserKnob {7 weighting l weighting* t "Controls the increase of the effect from the center to the corners.\n1: The effect increases linearly\n<1: slower increase first, then quicker towards the edge\n>1: quicker increase first and then slower towards the edge\n\n<strong>Any value other than 1 causes an internal switch from Transform to STMap, which reduces the speed significantly." R 0.2 2}
+ multiply 1
+ addUserKnob {7 multiply_style l "multiply style*" t "This only makes a difference if the multiply has different values in width and height.\n\nAt 0 the multiply will affect the width/height component directly, changing the direction of the blur, while at 1 it won't change the direction but the length of the blur.\n\nTry it out with vectors enabled to see the difference.\n\n<strong>*If the multiply values for width and height are not the same, any value other than 0 causes an internal switch from Transform to STMap, which is slower to calculate."}
+ addUserKnob {7 weighting l weighting* t "Controls the increase of the effect from the center to the corners.\n1: The effect increases linearly\n<1: slower increase first, then quicker towards the edge\n>1: quicker increase first and then slower towards the edge\n\n<strong>Any value other than 1 causes an internal switch from Transform to STMap, which is slower to calculate." R 0.2 2}
  weighting 1
  addUserKnob {7 saturation t "Saturation of the effect"}
  saturation 1
- addUserKnob {3 samples l samples* t "How often the curve gets subsampled. Increase the value until there are no visible steps anymore.\n\n<strong>*Only use as many samples as necessary for a smooth effect, as the amount of samples directly influences the speed of this node."}
- samples 50
+ addUserKnob {3 samples t "How often the curve gets subsampled. Increase the value until there are no visible steps anymore.\n\n<strong>Only use as many samples as necessary for a smooth effect, as the amount of samples directly influences the speed of this node."}
+ samples 3
  addUserKnob {12 center t "Center of the effect."}
- center {{width/2 i} {height/2 i}}
+ center {{width/2} {height/2}}
  addUserKnob {22 release_center l "release center" -STARTLINE T "node = nuke.thisNode()\nnode\['center'].clearAnimated()\nnode\['release_center'].setVisible(False)\nnode\['link_center'].setVisible(True)"}
  addUserKnob {22 link_center l "link to center" -STARTLINE +HIDDEN T "node = nuke.thisNode()\nnode\['center'].setExpression('width/2',0)\nnode\['center'].setExpression('height/2',1)\nnode\['link_center'].setVisible(False)\nnode\['release_center'].setVisible(True)"}
  addUserKnob {6 invert t "Invert the effect. Useful to remove aberration." +STARTLINE}
  addUserKnob {41 filter T STMap.filter}
  addUserKnob {6 black_outside l "black outside" -STARTLINE}
  addUserKnob {26 divider03 l " "}
- addUserKnob {41 effect_mask l "effect mask*" t "The effect will be multiplied with the selected channel. Values above 1 will increase the effect, values below 1 decrease it.\n\n<strong>*Using the effect mask causes an internal switch from Transform to STMap, which reduces the speed significantly." T Copy5.from0}
+ addUserKnob {41 effect_mask l "effect mask*" t "The effect will be multiplied with the selected channel. Values above 1 will increase the effect, values below 1 decrease it.\n\n<strong>*Using the effect mask causes an internal switch from Transform to STMap, which is slower to calculate." T Copy5.from0}
  addUserKnob {6 invert_effect_mask l invert -STARTLINE}
  addUserKnob {41 maskChannelMask l mask T Dissolve.maskChannelMask}
  addUserKnob {41 inject -STARTLINE T Dissolve.inject}
@@ -59,10 +59,10 @@ Group {
  addUserKnob {41 fringe -STARTLINE T Dissolve.fringe}
  addUserKnob {41 mix T Dissolve.which}
  addUserKnob {20 Info_tab l Info}
- addUserKnob {26 dasname l "" +STARTLINE T "<font size='2'>per channel</font><br><font size='5'>Faberration</font> v1.0.6<br><font color=#7C0000>&macr;</font><font color=#AA0000>&macr;</font><font color=#CB0000>&macr;</font><font color=#E70000>&macr;</font><font color=#FF0000>&macr;</font><font color=#E77C00>&macr;</font><font color=#CBAA00>&macr;</font><font color=#AACB00>&macr;</font><font color=#7CE700>&macr;</font><font color=#00FF00>&macr;</font><font color=#00E77C>&macr;</font><font color=#00CBAA>&macr;</font><font color=#00AACB>&macr;</font><font color=#007CE7>&macr;</font><font color=#0000FF>&macr;</font><font color=#0000E7>&macr;</font><font color=#0000CB>&macr;</font><font color=#0000AA>&macr;</font><font color=#00007C>&macr;</font>"}
+ addUserKnob {26 dasname l "" +STARTLINE T "<font size='2'>per channel</font><br><font size='5'>Faberration</font> v1.0.7<br><font color=#7C0000>&macr;</font><font color=#AA0000>&macr;</font><font color=#CB0000>&macr;</font><font color=#E70000>&macr;</font><font color=#FF0000>&macr;</font><font color=#E77C00>&macr;</font><font color=#CBAA00>&macr;</font><font color=#AACB00>&macr;</font><font color=#7CE700>&macr;</font><font color=#00FF00>&macr;</font><font color=#00E77C>&macr;</font><font color=#00CBAA>&macr;</font><font color=#00AACB>&macr;</font><font color=#007CE7>&macr;</font><font color=#0000FF>&macr;</font><font color=#0000E7>&macr;</font><font color=#0000CB>&macr;</font><font color=#0000AA>&macr;</font><font color=#00007C>&macr;</font>"}
  addUserKnob {26 what l "" +STARTLINE T "pcFaberration creates a realistic (lateral) chromatic aberration effect.\nIt's driven by a curve that describes the focus error of a color depen-\nding on its position in the (simplified) visible colour spectrum.\n\nIt is part of the pc-toolset, a collection of nodes that offer the possi-\nbility to affect the channels separately. Chain them up in any way to\nachieve the desired effect.\n\nAn optional per channel alpha layer (pc_alpha) can be created in or-\nder to correctly merge the result over a background. In this case it's\nnecessary to use the pcMerge instead of a regular Merge."}
  addUserKnob {26 divider l "" +STARTLINE}
- addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-04-24\n"}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-04-25\n"}
  addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
  addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
  addUserKnob {1 _label_str l "" +STARTLINE +INVISIBLE}
@@ -91,13 +91,13 @@ Group {
   xpos -1546
   ypos -510
  }
-set Na91b1c00 [stack 0]
+set N7cf28400 [stack 0]
  Dot {
   name Dot30
   xpos -1106
   ypos -510
  }
-set Nb27f2400 [stack 0]
+set N247ba000 [stack 0]
  Dot {
   name Dot31
   xpos -996
@@ -111,7 +111,7 @@ set Nb27f2400 [stack 0]
   channel0 none
   channel1 none
   channel2 none
-  expr3 "clamp(1 - hypot((x+.5) % resx - resx/2, (y+.5) / pixel_aspect % resy - resy / 2) + (size-1) / 2) * brightness"
+  expr3 "clamp(1 - hypot((x+.5) % resx - resx/2, (y+.5) / pixel_aspect % resy - resy / 2) + (size-1) / 2)"
   name Vectors
   xpos -1030
   ypos -442
@@ -120,8 +120,6 @@ set Nb27f2400 [stack 0]
   resolution {{parent.res}}
   addUserKnob {7 size R 0 10}
   size {{parent.size}}
-  addUserKnob {7 brightness R 0 10}
-  brightness {{parent.brightness}}
  }
  Shuffle {
   red alpha
@@ -131,12 +129,19 @@ set Nb27f2400 [stack 0]
   xpos -1030
   ypos -394
  }
+ Multiply {
+  channels rgb
+  value {{parent.brightness}}
+  name Multiply2
+  xpos -1030
+  ypos -346
+ }
  Dot {
   name Dot32
   xpos -996
   ypos -270
  }
-push $Nb27f2400
+push $N247ba000
  Merge2 {
   inputs 2
   name Merge3
@@ -149,7 +154,7 @@ push $Nb27f2400
   xpos -1106
   ypos -174
  }
-set Naee28800 [stack 0]
+set Nf281e800 [stack 0]
  Dot {
   name Dot3
   xpos -1216
@@ -173,7 +178,7 @@ add_layer {pc_alpha pc_alpha.red pc_alpha.green pc_alpha.blue}
   xpos -1216
   ypos -30
  }
-push $Naee28800
+push $Nf281e800
  Copy {
   inputs 2
   channels pc_alpha
@@ -194,7 +199,7 @@ push $Naee28800
   xpos -1106
   ypos 138
  }
-set Nb20d3800 [stack 0]
+set N2b136400 [stack 0]
  Dot {
   name Dot37
   xpos -1326
@@ -205,7 +210,7 @@ set Nb20d3800 [stack 0]
   xpos -1326
   ypos 1770
  }
-set Nb542dc00 [stack 0]
+set Nc95b3400 [stack 0]
  Input {
   inputs 0
   name effect_mask
@@ -218,12 +223,13 @@ set Nb542dc00 [stack 0]
   xpos -446
   ypos 330
  }
-set Nae3ae400 [stack 0]
-push $Nae3ae400
+set Ndcfb0800 [stack 0]
+push $Ndcfb0800
  Copy {
   inputs 2
-  from0 -rgba.alpha
   to0 rgba.red
+  from1 {{{from0}}}
+  to1 rgba.green
   name Copy5
   xpos -480
   ypos 392
@@ -240,7 +246,7 @@ push $Nae3ae400
   xpos -446
   ypos 594
  }
-push $Nb20d3800
+push $N2b136400
  NoTimeBlur {
   rounding floor
   name NoTimeBlur1
@@ -252,13 +258,13 @@ push $Nb20d3800
   xpos -1106
   ypos 330
  }
-set Nb6032800 [stack 0]
+set Nf28afc00 [stack 0]
  Dot {
   name Dot26
   xpos -886
   ypos 330
  }
-set Nb6470000 [stack 0]
+set Nb6331000 [stack 0]
  Dot {
   name Dot22
   xpos -666
@@ -267,8 +273,10 @@ set Nb6470000 [stack 0]
  Expression {
   temp_name0 center
   temp_expr0 parent.center
-  expr0 "abs(1 - abs(atan(x - center.x, (y - center.y) / pixel_aspect) / pi) * 2)"
+  expr0 "abs(1 - abs(atan(x + .5 - center.x, (y + .5 - center.y) / pixel_aspect) / pi) * 2)"
   expr1 "hypot(x + .5 - center.x, (y + .5 - center.y) / pixel_aspect) / hypot((width - 1) / 2, (height - 1) / 2 / pixel_aspect)"
+  channel2 none
+  channel3 none
   name Expression4
   xpos -700
   ypos 398
@@ -277,7 +285,8 @@ set Nb6470000 [stack 0]
   temp_name0 power
   temp_expr0 "1 / parent.weighting"
   expr0 "1 / g * pow(g, power) * (1 - lerp(1 - r, 0, parent.multiply.w) - lerp(r, 0, parent.multiply.h))"
-  channel1 none
+  channel1 {-rgba.red rgba.green -rgba.blue none}
+  expr1 "1 / g * pow(g, power)"
   channel2 none
   channel3 none
   name Expression5
@@ -287,9 +296,9 @@ set Nb6470000 [stack 0]
  Merge2 {
   inputs 2
   operation multiply
-  Achannels {rgba.red -rgba.green -rgba.blue none}
-  Bchannels {rgba.red -rgba.green -rgba.blue none}
-  output {rgba.red -rgba.green -rgba.blue none}
+  Achannels {rgba.red rgba.green -rgba.blue none}
+  Bchannels {rgba.red rgba.green -rgba.blue none}
+  output {rgba.red rgba.green -rgba.blue none}
   name Merge5
   xpos -700
   ypos 590
@@ -306,8 +315,9 @@ set Nb6470000 [stack 0]
   temp_expr0 parent.center
   temp_name1 focus_error
   temp_expr1 detour.focus_error
-  expr0 "((x + .5 - center.x) / (focus_error * lerp(parent.multiply.w, r, parent.multiply_style) + 1) + center.x) / width"
-  expr1 "((y + .5 - center.y) / (focus_error * lerp(parent.multiply.h, r, parent.multiply_style) +1 ) + center.y) / height"
+  expr0 "((x + .5 - center.x) / (focus_error * lerp(parent.multiply.w * g, r, parent.multiply_style) + 1) + center.x) / width"
+  expr1 "((y + .5 - center.y) / (focus_error * lerp(parent.multiply.h * g, r, parent.multiply_style) +1 ) + center.y) / height"
+  channel2 none
   channel3 none
   name Expression6
   xpos -700
@@ -318,7 +328,7 @@ set Nb6470000 [stack 0]
   xpos -666
   ypos 882
  }
-push $Nb6470000
+push $Nb6331000
  BlackOutside {
   name BlackOutside
   xpos -920
@@ -337,7 +347,7 @@ push $Nb6470000
   xpos -886
   ypos 1074
  }
-push $Nb6032800
+push $Nf28afc00
  Transform {
   scale {{detour.focus_error*parent.multiply.w+1} {detour.focus_error*parent.multiply.h+1}}
   center {{parent.center} {parent.center}}
@@ -355,7 +365,7 @@ push $Nb6032800
   xpos -1140
   ypos 1070
  }
-add_layer {correct_values correct_values.red correct_values.green correct_values.blue correct_values.alpha}
+add_layer {correct_values correct_values.red correct_values.green correct_values.blue correct_values.alpha correct_values.alpha}
  AddChannels {
   channels {correct_values.red correct_values.green correct_values.blue none}
   color 1
@@ -367,7 +377,7 @@ add_layer {correct_values correct_values.red correct_values.green correct_values
   value {{"lerp(luminance, spectrum.r, parent.saturation)"} {"lerp(luminance, spectrum.g, parent.saturation)"} {"lerp(luminance, spectrum.b, parent.saturation)"} 0}
   name Multiply1
   xpos -1140
-  ypos 1267
+  ypos 1256
   addUserKnob {20 User}
   addUserKnob {18 spectrum}
   spectrum {{Spectrum.lut.red(x%1)} {Spectrum.lut.green(x%1)} {Spectrum.lut.blue(x%1)}}
@@ -387,8 +397,8 @@ add_layer {correct_values correct_values.red correct_values.green correct_values
   xpos -1106
   ypos 1482
  }
-set Na082c000 [stack 0]
-push $Na082c000
+set N2ac3ec00 [stack 0]
+push $N2ac3ec00
  Dot {
   name Dot17
   xpos -886
@@ -435,13 +445,13 @@ push $Na082c000
   xpos -1106
   ypos 2010
  }
-set Nadeb1800 [stack 0]
+set N10437800 [stack 0]
  Dot {
   name Dot8
   xpos -1106
   ypos 2106
  }
-set Naebd0000 [stack 0]
+set N2c016400 [stack 0]
  Group {
   name GenerateAlpha
   tile_color 0x7f7f7fff
@@ -461,7 +471,7 @@ set Naebd0000 [stack 0]
    xpos -6
    ypos 114
   }
-set Nb6057400 [stack 0]
+set Ne91ec400 [stack 0]
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 min(pc_alpha.red,pc_alpha.green,pc_alpha.blue)
@@ -472,7 +482,7 @@ set Nb6057400 [stack 0]
    xpos 180
    ypos 206
   }
-push $Nb6057400
+push $Ne91ec400
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 max(pc_alpha.red,pc_alpha.green,pc_alpha.blue)
@@ -483,7 +493,7 @@ push $Nb6057400
    xpos 70
    ypos 206
   }
-push $Nb6057400
+push $Ne91ec400
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 pc_alpha.red*0.2126+pc_alpha.green*0.7152+pc_alpha.blue*0.0722
@@ -494,7 +504,7 @@ push $Nb6057400
    xpos -40
    ypos 206
   }
-push $Nb6057400
+push $Ne91ec400
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 (pc_alpha.red+pc_alpha.green+pc_alpha.blue)/3
@@ -505,7 +515,7 @@ push $Nb6057400
    xpos -150
    ypos 206
   }
-push $Nb6057400
+push $Ne91ec400
   Dot {
    name Dot2
    xpos -226
@@ -524,10 +534,10 @@ push $Nb6057400
    ypos 398
   }
  end_group
-push $Naebd0000
-push $Nadeb1800
-push $Nb542dc00
-push $Na91b1c00
+push $N2c016400
+push $N10437800
+push $Nc95b3400
+push $N7cf28400
  Copy {
   inputs 2
   channels pc_alpha
@@ -541,7 +551,7 @@ push $Na91b1c00
   xpos -1546
   ypos 1914
  }
-set Nb0cabc00 [stack 0]
+set Ned1da400 [stack 0]
  Dot {
   name Dot7
   xpos -1326
@@ -577,11 +587,11 @@ set Nb0cabc00 [stack 0]
   xpos -1326
   ypos 2322
  }
-push $Nb0cabc00
+push $Ned1da400
  Dissolve {
   inputs 2+1
   which 1
-  maskChannelMask -rgba.alpha
+  maskChannelMask none
   name Dissolve
   xpos -1580
   ypos 2312
@@ -592,37 +602,60 @@ push $Nb0cabc00
   xpos -1580
   ypos 2438
  }
+ Group {
+  inputs 0
+  name Spectrum
+  xpos -1030
+  ypos 1238
+  hide_input true
+  addUserKnob {20 User}
+  addUserKnob {26 info l " " T "The red, green and blue curves show the contribution of the\nchannels to the spectrum. If you're changing this, make sure to\nupdate the x-coordinate of the peak values of the colors after."}
+  addUserKnob {41 lut l "" +STARTLINE T Sampler1.lut}
+  addUserKnob {78 red_peak l "red peak: x = " n 1}
+  red_peak 0.25
+  addUserKnob {78 green_peak l "green peak: x = " n 1}
+  green_peak 0.5
+  addUserKnob {78 blue_peak l "blue peak: x = " n 1}
+  blue_peak 0.75
+ }
+  Input {
+   inputs 0
+   name Input1
+   xpos -464
+   ypos 122
+  }
+  Sampler {
+   lut {red {curve L 0 x0.25 1 0}
+     green {curve L x0.25 0 x0.5 1 0}
+     blue {curve L x0.5 0 x0.75 1 0}}
+   name Sampler1
+   xpos -464
+   ypos 162
+  }
+  Output {
+   name Output1
+   xpos -464
+   ypos 262
+  }
+ end_group
  NoOp {
   inputs 0
   name detour
   xpos -1030
   ypos 686
-  hide_input true
   addUserKnob {20 User}
   addUserKnob {7 focus_error l "focus error" R -10 10}
-  focus_error {{"Curve.lut(x % 1) * (parent.invert ? -1 : 1) / 100"}}
+  focus_error {{"Curve.lut.curve(x % 1) * (parent.invert ? -1 : 1) / 100"}}
  }
  TimeDissolve {
   inputs 0
-  lut {curve {curve l x0.25 -0.1 x0.5 0 0.3}}
+  lut {curve {curve l x0.25 -0.15 x0.5 0 0.15}}
   name Curve
-  knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\nparent = nuke.thisParent()\n\nif knob.name() == 'lut':\n    if parent\['helper'].value() is True:\n        parent\['focus_error'].setEnabled(False)\n        parent\['offset'].setEnabled(False)\n        parent\['helper'].setValue(False)"
+  knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\nparent = nuke.thisParent()\nprint knob\nif knob.name() == 'lut':\n    if parent\['helper'].value() is True:\n        for k in \['focus_error', 'offset']:\n            parent\[k].setEnabled(False)\n        parent\['reset'].setEnabled(True)\n        parent\['helper'].setValue(False)"
   xpos -1030
   ypos 614
   hide_input true
   addUserKnob {20 User}
   addUserKnob {6 helper +STARTLINE}
-  helper true
- }
- ColorLookup {
-  inputs 0
-  lut {master {}
-    red {curve L 0 x0.25 1 0}
-    green {curve L x0.25 0 x0.5 1 0}
-    blue {curve L x0.5 0 x0.75 1 0}
-    alpha {}}
-  name Spectrum
-  xpos -1020
-  ypos 1274
  }
 end_group
