@@ -14,23 +14,24 @@ Group {
  addUserKnob {20 vectors n 1}
  vectors 0
  addUserKnob {6 overlay_vectors l "overlay vectors" t "Overlays vectors over the image to better show the effect." +STARTLINE}
- overlay_vectors true
  addUserKnob {3 res}
  res 20
  addUserKnob {78 size n 1}
  size 1
  addUserKnob {78 brightness n 1}
- brightness 5
+ brightness 2
  addUserKnob {20 endGroup_1 l endGroup n -1}
  addUserKnob {26 divider01 l " "}
  addUserKnob {18 focus_error l "focus error" t "Controls the curve on the basis of the focus error of each channel. Look at the curve below to see how the values affect it.\nFor the initial setting you can try to pick the chromatic aberration of the plate by dragging the sample area over a neutral, high contrast aberrated edge. Then adjust the multiply value below until the effect matches the plate. Depending on which 'side' you picked, you might have to invert the effect." R -1 1}
  focus_error {-0.15 0 0.15}
+ addUserKnob {26 spacer l "" -STARTLINE T "  "}
+ addUserKnob {6 violet l "add violet" t "This will add some red to the blue end of the spectrum, to introduce violet. Will lead to some ghosting in the red channel." -STARTLINE}
  addUserKnob {7 offset t "Global scale offset. Adjust to prevent stretched or black pixels at the edge of the format." R -1 1}
  addUserKnob {6 helper t "checker to indicate whether the rgb control knobs are disabled or not" +INVISIBLE +STARTLINE}
  helper true
  addUserKnob {20 curves n 1}
  curves 0
- addUserKnob {22 whatsthis l "What am I looking at?" T "nuke.message(\"\"\"The x-axis represents a simplified visible spectrum (red - green - blue, from 0 to 1), while the y-axis represents the focus error (which is essentially a scale). This means that the curve controls the scale for every color in the spectrum individually.\n\nEither control the curve with the focus error and offset knobs, or by manipulating it directly.\"\"\")" +STARTLINE}
+ addUserKnob {22 whatsthis l "What am I looking at?" T "nuke.message(\"\"\"The x-axis represents a simplified visible spectrum (red - green - blue, from 0 to 1), while the y-axis represents the focus error (which is essentially a scale). This means that the curve controls the scale for every color in the spectrum individually.\n\nEither control the curve with the <i>focus error</i> and <i>offset</i> knobs, or by manipulating it directly.\"\"\")" +STARTLINE}
  addUserKnob {22 reset l "reset master curve to focus error values" -STARTLINE +DISABLED T "node = nuke.thisNode()\nnode\['helper'].setValue(True)"}
  addUserKnob {41 lut l "" +STARTLINE T Curve.lut}
  addUserKnob {20 endGroup n -1}
@@ -44,7 +45,7 @@ Group {
  addUserKnob {3 samples t "How often the curve gets subsampled. Increase the value until there are no visible steps anymore.\n\n<strong>Only use as many samples as necessary for a smooth effect, as the amount of samples directly influences the speed of this node."}
  samples 3
  addUserKnob {12 center t "Center of the effect."}
- center {{width/2} {height/2}}
+ center {{width/2 i} {height/2 i}}
  addUserKnob {22 release_center l "release center" -STARTLINE T "node = nuke.thisNode()\nnode\['center'].clearAnimated()\nnode\['release_center'].setVisible(False)\nnode\['link_center'].setVisible(True)"}
  addUserKnob {22 link_center l "link to center" -STARTLINE +HIDDEN T "node = nuke.thisNode()\nnode\['center'].setExpression('width/2',0)\nnode\['center'].setExpression('height/2',1)\nnode\['link_center'].setVisible(False)\nnode\['release_center'].setVisible(True)"}
  addUserKnob {6 invert t "Invert the effect. Useful to remove aberration." +STARTLINE}
@@ -59,15 +60,26 @@ Group {
  addUserKnob {41 fringe -STARTLINE T Dissolve.fringe}
  addUserKnob {41 mix T Dissolve.which}
  addUserKnob {20 Info_tab l Info}
- addUserKnob {26 dasname l "" +STARTLINE T "<font size='2'>per channel</font><br><font size='5'>Faberration</font> v1.0.7<br><font color=#7C0000>&macr;</font><font color=#AA0000>&macr;</font><font color=#CB0000>&macr;</font><font color=#E70000>&macr;</font><font color=#FF0000>&macr;</font><font color=#E77C00>&macr;</font><font color=#CBAA00>&macr;</font><font color=#AACB00>&macr;</font><font color=#7CE700>&macr;</font><font color=#00FF00>&macr;</font><font color=#00E77C>&macr;</font><font color=#00CBAA>&macr;</font><font color=#00AACB>&macr;</font><font color=#007CE7>&macr;</font><font color=#0000FF>&macr;</font><font color=#0000E7>&macr;</font><font color=#0000CB>&macr;</font><font color=#0000AA>&macr;</font><font color=#00007C>&macr;</font>"}
+ addUserKnob {26 dasname l "" +STARTLINE T "<font size='2'>per channel</font><br><font size='5'>Faberration</font> v1.0.8<br><font color=#7C0000>&macr;</font><font color=#AA0000>&macr;</font><font color=#CB0000>&macr;</font><font color=#E70000>&macr;</font><font color=#FF0000>&macr;</font><font color=#E77C00>&macr;</font><font color=#CBAA00>&macr;</font><font color=#AACB00>&macr;</font><font color=#7CE700>&macr;</font><font color=#00FF00>&macr;</font><font color=#00E77C>&macr;</font><font color=#00CBAA>&macr;</font><font color=#00AACB>&macr;</font><font color=#007CE7>&macr;</font><font color=#0000FF>&macr;</font><font color=#0000E7>&macr;</font><font color=#0000CB>&macr;</font><font color=#0000AA>&macr;</font><font color=#00007C>&macr;</font>"}
  addUserKnob {26 what l "" +STARTLINE T "pcFaberration creates a realistic (lateral) chromatic aberration effect.\nIt's driven by a curve that describes the focus error of a color depen-\nding on its position in the (simplified) visible colour spectrum.\n\nIt is part of the pc-toolset, a collection of nodes that offer the possi-\nbility to affect the channels separately. Chain them up in any way to\nachieve the desired effect.\n\nAn optional per channel alpha layer (pc_alpha) can be created in or-\nder to correctly merge the result over a background. In this case it's\nnecessary to use the pcMerge instead of a regular Merge."}
  addUserKnob {26 divider l "" +STARTLINE}
- addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-04-25\n"}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-04-26\n"}
  addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
  addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
  addUserKnob {1 _label_str l "" +STARTLINE +INVISIBLE}
  _label_str "\[if \{\[value this.Switch2.which]\} \{return \"STMap\"\} else \{return \"Transform\"\}]"
 }
+ BackdropNode {
+  inputs 0
+  name BackdropNode1
+  tile_color 0x388e8e00
+  label Spectrum
+  note_font_size 42
+  xpos -1015
+  ypos 1154
+  bdwidth 287
+  bdheight 212
+ }
  Input {
   inputs 0
   name mask
@@ -91,13 +103,13 @@ Group {
   xpos -1546
   ypos -510
  }
-set N7cf28400 [stack 0]
+set Nad5b3c00 [stack 0]
  Dot {
   name Dot30
   xpos -1106
   ypos -510
  }
-set N247ba000 [stack 0]
+set N1ec84c00 [stack 0]
  Dot {
   name Dot31
   xpos -996
@@ -141,7 +153,7 @@ set N247ba000 [stack 0]
   xpos -996
   ypos -270
  }
-push $N247ba000
+push $N1ec84c00
  Merge2 {
   inputs 2
   name Merge3
@@ -154,7 +166,7 @@ push $N247ba000
   xpos -1106
   ypos -174
  }
-set Nf281e800 [stack 0]
+set N35f1c00 [stack 0]
  Dot {
   name Dot3
   xpos -1216
@@ -178,7 +190,7 @@ add_layer {pc_alpha pc_alpha.red pc_alpha.green pc_alpha.blue}
   xpos -1216
   ypos -30
  }
-push $Nf281e800
+push $N35f1c00
  Copy {
   inputs 2
   channels pc_alpha
@@ -199,7 +211,7 @@ push $Nf281e800
   xpos -1106
   ypos 138
  }
-set N2b136400 [stack 0]
+set Ndc295c00 [stack 0]
  Dot {
   name Dot37
   xpos -1326
@@ -210,7 +222,7 @@ set N2b136400 [stack 0]
   xpos -1326
   ypos 1770
  }
-set Nc95b3400 [stack 0]
+set Nb18f9800 [stack 0]
  Input {
   inputs 0
   name effect_mask
@@ -223,8 +235,8 @@ set Nc95b3400 [stack 0]
   xpos -446
   ypos 330
  }
-set Ndcfb0800 [stack 0]
-push $Ndcfb0800
+set N1e881000 [stack 0]
+push $N1e881000
  Copy {
   inputs 2
   to0 rgba.red
@@ -246,7 +258,7 @@ push $Ndcfb0800
   xpos -446
   ypos 594
  }
-push $N2b136400
+push $Ndc295c00
  NoTimeBlur {
   rounding floor
   name NoTimeBlur1
@@ -258,13 +270,13 @@ push $N2b136400
   xpos -1106
   ypos 330
  }
-set Nf28afc00 [stack 0]
+set Nb788f800 [stack 0]
  Dot {
   name Dot26
   xpos -886
   ypos 330
  }
-set Nb6331000 [stack 0]
+set Nb788f400 [stack 0]
  Dot {
   name Dot22
   xpos -666
@@ -328,7 +340,7 @@ set Nb6331000 [stack 0]
   xpos -666
   ypos 882
  }
-push $Nb6331000
+push $Nb788f400
  BlackOutside {
   name BlackOutside
   xpos -920
@@ -347,7 +359,7 @@ push $Nb6331000
   xpos -886
   ypos 1074
  }
-push $Nf28afc00
+push $Nb788f800
  Transform {
   scale {{detour.focus_error*parent.multiply.w+1} {detour.focus_error*parent.multiply.h+1}}
   center {{parent.center} {parent.center}}
@@ -371,7 +383,7 @@ add_layer {correct_values correct_values.red correct_values.green correct_values
   color 1
   name AddChannels1
   xpos -1140
-  ypos 1184
+  ypos 1140
  }
  Multiply {
   value {{"lerp(luminance, spectrum.r, parent.saturation)"} {"lerp(luminance, spectrum.g, parent.saturation)"} {"lerp(luminance, spectrum.b, parent.saturation)"} 0}
@@ -380,7 +392,7 @@ add_layer {correct_values correct_values.red correct_values.green correct_values
   ypos 1256
   addUserKnob {20 User}
   addUserKnob {18 spectrum}
-  spectrum {{Spectrum.lut.red(x%1)} {Spectrum.lut.green(x%1)} {Spectrum.lut.blue(x%1)}}
+  spectrum {{(parent.violet?Spectrum.lut.red(x%1):Spectrum.lut.alpha(x%1))} {Spectrum.lut.green(x%1)} {Spectrum.lut.blue(x%1)}}
   addUserKnob {7 luminance}
   luminance {{spectrum.r*0.2126+spectrum.g*0.7152+spectrum.b*0.0722}}
  }
@@ -397,8 +409,8 @@ add_layer {correct_values correct_values.red correct_values.green correct_values
   xpos -1106
   ypos 1482
  }
-set N2ac3ec00 [stack 0]
-push $N2ac3ec00
+set Nee8ac800 [stack 0]
+push $Nee8ac800
  Dot {
   name Dot17
   xpos -886
@@ -445,13 +457,13 @@ push $N2ac3ec00
   xpos -1106
   ypos 2010
  }
-set N10437800 [stack 0]
+set N5d2d6800 [stack 0]
  Dot {
   name Dot8
   xpos -1106
   ypos 2106
  }
-set N2c016400 [stack 0]
+set N5d2d6c00 [stack 0]
  Group {
   name GenerateAlpha
   tile_color 0x7f7f7fff
@@ -459,6 +471,7 @@ set N2c016400 [stack 0]
   ypos 2198
   addUserKnob {20 GenerateAlpha_tab l GenerateAlpha}
   addUserKnob {4 operation M {original average luminance max min "" "" "" ""}}
+  operation luminance
  }
   Input {
    inputs 0
@@ -471,7 +484,7 @@ set N2c016400 [stack 0]
    xpos -6
    ypos 114
   }
-set Ne91ec400 [stack 0]
+set N2f306000 [stack 0]
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 min(pc_alpha.red,pc_alpha.green,pc_alpha.blue)
@@ -482,7 +495,7 @@ set Ne91ec400 [stack 0]
    xpos 180
    ypos 206
   }
-push $Ne91ec400
+push $N2f306000
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 max(pc_alpha.red,pc_alpha.green,pc_alpha.blue)
@@ -493,7 +506,7 @@ push $Ne91ec400
    xpos 70
    ypos 206
   }
-push $Ne91ec400
+push $N2f306000
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 pc_alpha.red*0.2126+pc_alpha.green*0.7152+pc_alpha.blue*0.0722
@@ -504,7 +517,7 @@ push $Ne91ec400
    xpos -40
    ypos 206
   }
-push $Ne91ec400
+push $N2f306000
   Expression {
    channel0 {none none none rgba.alpha}
    expr0 (pc_alpha.red+pc_alpha.green+pc_alpha.blue)/3
@@ -515,7 +528,7 @@ push $Ne91ec400
    xpos -150
    ypos 206
   }
-push $Ne91ec400
+push $N2f306000
   Dot {
    name Dot2
    xpos -226
@@ -534,10 +547,10 @@ push $Ne91ec400
    ypos 398
   }
  end_group
-push $N2c016400
-push $N10437800
-push $Nc95b3400
-push $N7cf28400
+push $N5d2d6c00
+push $N5d2d6800
+push $Nb18f9800
+push $Nad5b3c00
  Copy {
   inputs 2
   channels pc_alpha
@@ -551,7 +564,7 @@ push $N7cf28400
   xpos -1546
   ypos 1914
  }
-set Ned1da400 [stack 0]
+set Nb4297c00 [stack 0]
  Dot {
   name Dot7
   xpos -1326
@@ -587,7 +600,7 @@ set Ned1da400 [stack 0]
   xpos -1326
   ypos 2322
  }
-push $Ned1da400
+push $Nb4297c00
  Dissolve {
   inputs 2+1
   which 1
@@ -602,42 +615,6 @@ push $Ned1da400
   xpos -1580
   ypos 2438
  }
- Group {
-  inputs 0
-  name Spectrum
-  xpos -1030
-  ypos 1238
-  hide_input true
-  addUserKnob {20 User}
-  addUserKnob {26 info l " " T "The red, green and blue curves show the contribution of the\nchannels to the spectrum. If you're changing this, make sure to\nupdate the x-coordinate of the peak values of the colors after."}
-  addUserKnob {41 lut l "" +STARTLINE T Sampler1.lut}
-  addUserKnob {78 red_peak l "red peak: x = " n 1}
-  red_peak 0.25
-  addUserKnob {78 green_peak l "green peak: x = " n 1}
-  green_peak 0.5
-  addUserKnob {78 blue_peak l "blue peak: x = " n 1}
-  blue_peak 0.75
- }
-  Input {
-   inputs 0
-   name Input1
-   xpos -464
-   ypos 122
-  }
-  Sampler {
-   lut {red {curve L 0 x0.25 1 0}
-     green {curve L x0.25 0 x0.5 1 0}
-     blue {curve L x0.5 0 x0.75 1 0}}
-   name Sampler1
-   xpos -464
-   ypos 162
-  }
-  Output {
-   name Output1
-   xpos -464
-   ypos 262
-  }
- end_group
  NoOp {
   inputs 0
   name detour
@@ -649,7 +626,7 @@ push $Ned1da400
  }
  TimeDissolve {
   inputs 0
-  lut {curve {curve l x0.25 -0.15 x0.5 0 0.15}}
+  lut {curve {curve l x0.3382891417 -0.15 x0.5294502378 0 x0.8000000119 0.15}}
   name Curve
   knobChanged "node = nuke.thisNode()\nknob = nuke.thisKnob()\nparent = nuke.thisParent()\nprint knob\nif knob.name() == 'lut':\n    if parent\['helper'].value() is True:\n        for k in \['focus_error', 'offset']:\n            parent\[k].setEnabled(False)\n        parent\['reset'].setEnabled(True)\n        parent\['helper'].setValue(False)"
   xpos -1030
@@ -658,4 +635,39 @@ push $Ned1da400
   addUserKnob {20 User}
   addUserKnob {6 helper +STARTLINE}
  }
+ Group {
+  inputs 0
+  name Spectrum
+  xpos -920
+  ypos 1262
+  hide_input true
+  bookmark true
+  addUserKnob {20 User}
+  addUserKnob {26 info l " " T "The red, green and blue curves show the contribution of the\nchannels to the spectrum. If you're changing this, make sure to\nupdate the x-coordinate of the peak values of the colors below."}
+  addUserKnob {41 lut l "" +STARTLINE T ColorLookup1.lut}
+  addUserKnob {78 red_peak l "red peak: x = " n 1}
+  red_peak 0.33828914
+  addUserKnob {78 green_peak l "green peak: x = " n 1}
+  green_peak 0.52945024
+  addUserKnob {78 blue_peak l "blue peak: x = " n 1}
+  blue_peak 0.8
+ }
+  ColorLookup {
+   inputs 0
+   lut {master {}
+     red {curve 0 s0 x0.1177189946 0.1255357862 s3.400000095 u0.7994590998 x0.1324235797 0.170450151 x0.147128284 0.2340531498 x0.1618329287 0.3242225647 x0.1765378118 0.4406342506 x0.1912421584 0.5833214521 x0.2059471607 0.7542783618 x0.2206516862 0.9568292499 x0.2353563905 1.182531118 x0.2500609756 1.422600508 x0.264765799 1.674511433 x0.2794701457 1.941620946 x0.294175148 2.183136225 x0.3088799119 2.362818718 x0.323584497 2.475823164 x0.3382891417 2.516948223 x0.3529937267 2.471950769 x0.3676987886 2.355792761 x0.3824029565 2.161755085 x0.3971079588 1.9158566 x0.4118124843 1.631250858 x0.4265174866 1.322234988 x0.4412215948 1.005258679 x0.4559268951 0.6928110719 s-18 v0.6270591617 x0.60297364 0 s0 x0.7059062719 0 s0 x0.7794297934 0.08947134018 s5 u0.6085929871 x0.7941343784 0.1475983262 x0.8088388443 0.1935347915 x0.8235441446 0.2223364711 x0.8382481337 0.2295742035 x0.852953136 0.2113924026 x0.8676575422 0.1668229103 x0.8823624849 0.1075285077 x0.8970671296 0.06297980249 x0.9117721915 0.03572373837 x0.9264762402 0.01932023466 x0.9411816001 0.0118746683 x0.9558855891 0.006273882464 x0.9705907702 0.003436093219 x0.9852949381 0.001740898471 x1 0 s0}
+     green {curve x0.264765799 0 s0 x0.3676987886 0.2794513106 s11.5 u0.7143399715 x0.3824029565 0.4254181981 x0.3971079588 0.5829081535 x0.4118124843 0.7440440059 x0.4265174866 0.9007472992 x0.4412215948 1.047347069 x0.4559268951 1.17839849 x0.470631361 1.290533662 x0.4853361249 1.379853964 x0.5000407696 1.446878195 x0.5147453547 1.49093008 x0.5294502378 1.509047389 x0.544154644 1.498801947 x0.5588594675 1.458426952 x0.573563993 1.384168744 x0.5882689953 1.273832798 x0.60297364 1.117399454 x0.617677927 0.9411712885 x0.6323829889 0.7705771327 x0.6470876932 0.612490952 x0.6617920995 0.48555848 x0.6764962673 0.3785167038 x0.6912018061 0.2869912684 x0.7059062719 0.2018839717 s-6.5 v0.5924050212 x0.7941343784 0 s0}
+     blue {curve x0.544154644 0 s0 x0.6323829889 0.1414699554 s5.599999905 u0.7295070291 x0.6470876932 0.22191751 x0.6617920995 0.3215454817 x0.6764962673 0.4511235952 x0.6912018061 0.6200917959 x0.7059062719 0.8364083767 x0.7206106782 1.086358309 x0.7353155613 1.353467226 1.614294529 x0.7647252083 1.768499851 x0.7794297934 1.851679325 1.884292722 x0.8088388443 1.897727609 x0.8235441446 1.861597896 x0.8382481337 1.73057127 x0.852953136 1.478188038 x0.8676575422 1.108925343 x0.8823624849 0.689144671 x0.8970671296 0.3963809609 x0.9117721915 0.2214241475 x0.9264762402 0.1176640913 x0.9411816001 0.07249312848 x0.9558855891 0.03865014389 s-2.200000048 v0.6412600279 x1 0 s0}
+     alpha {curve 0 s0 x0.1177190021 0.1255357862 s3.400000095 u0.7994589806 x0.1324239969 0.170450151 x0.1471280009 0.2340531498 x0.1618330032 0.3242225647 0.4406342506 x0.1912419945 0.5833214521 x0.2059469968 0.7542783618 0.9568292499 x0.235356003 1.182531118 x0.2500610054 1.422600508 x0.2647660077 1.674511433 x0.2794699967 1.941620946 x0.294174999 2.183136225 2.362818718 x0.3235839903 2.475823164 x0.3382889926 2.516948223 2.471950769 2.355792761 x0.3824029863 2.161755085 x0.3971079886 1.9158566 x0.4118120074 1.631250858 x0.4265170097 1.322234988 1.005258679 0.6928110719 s-18 v0.6270589828 x0.6029739976 0 s0}}
+   name ColorLookup1
+   xpos -372
+   ypos 183
+  }
+  Output {
+   inputs 0
+   name Output1
+   xpos -464
+   ypos 262
+  }
+ end_group
 end_group
