@@ -31,7 +31,7 @@ Group {
  helper true
  addUserKnob {20 curves n 1}
  curves 0
- addUserKnob {22 whatsthis l "What am I looking at?" T "nuke.message(\"\"\"The x-axis represents a simplified visible spectrum (red - green - blue, from 0 to 1), while the y-axis represents the focus error (which is essentially a scale). This means that the curve controls the scale for every color in the spectrum individually.\n\nEither control the curve with the <i>focus error</i> and <i>offset</i> knobs, or by manipulating it directly.\"\"\")" +STARTLINE}
+ addUserKnob {22 whatsthis l "What am I looking at?" T "nuke.message(\"\"\"The x-axis represents the visible spectrum (red - green - blue, from 0 to 1), while the y-axis represents the focus error (which is essentially a scale). This means that the curve controls the scale for every color in the spectrum individually.\n\nEither control the curve with the <i>focus error</i> and <i>offset</i> knobs, or by manipulating it directly.\"\"\")" +STARTLINE}
  addUserKnob {22 reset l "reset master curve to focus error values" -STARTLINE +DISABLED T "node = nuke.thisNode()\nnode\['helper'].setValue(True)"}
  addUserKnob {41 lut l "" +STARTLINE T Curve.lut}
  addUserKnob {20 endGroup n -1}
@@ -61,7 +61,7 @@ Group {
  addUserKnob {41 mix T Dissolve.which}
  addUserKnob {20 Info_tab l Info}
  addUserKnob {26 dasname l "" +STARTLINE T "<font size='2'>per channel</font><br><font size='5'>Faberration</font> v1.0.8<br><font color=#7C0000>&macr;</font><font color=#AA0000>&macr;</font><font color=#CB0000>&macr;</font><font color=#E70000>&macr;</font><font color=#FF0000>&macr;</font><font color=#E77C00>&macr;</font><font color=#CBAA00>&macr;</font><font color=#AACB00>&macr;</font><font color=#7CE700>&macr;</font><font color=#00FF00>&macr;</font><font color=#00E77C>&macr;</font><font color=#00CBAA>&macr;</font><font color=#00AACB>&macr;</font><font color=#007CE7>&macr;</font><font color=#0000FF>&macr;</font><font color=#0000E7>&macr;</font><font color=#0000CB>&macr;</font><font color=#0000AA>&macr;</font><font color=#00007C>&macr;</font>"}
- addUserKnob {26 what l "" +STARTLINE T "pcFaberration creates a realistic (lateral) chromatic aberration effect.\nIt's driven by a curve that describes the focus error of a color depen-\nding on its position in the (simplified) visible colour spectrum.\n\nIt is part of the pc-toolset, a collection of nodes that offer the possi-\nbility to affect the channels separately. Chain them up in any way to\nachieve the desired effect.\n\nAn optional per channel alpha layer (pc_alpha) can be created in or-\nder to correctly merge the result over a background. In this case it's\nnecessary to use the pcMerge instead of a regular Merge."}
+ addUserKnob {26 what l "" +STARTLINE T "pcFaberration creates a realistic (lateral) chromatic aberration effect.\nIt's driven by a curve that describes the focus error of a color depen-\nding on its position in the visible colour spectrum.\n\nIt is part of the pc-toolset, a collection of nodes that offer the possi-\nbility to affect the channels separately. Chain them up in any way to\nachieve the desired effect.\n\nAn optional per channel alpha layer (pc_alpha) can be created in or-\nder to correctly merge the result over a background. In this case it's\nnecessary to use the pcMerge instead of a regular Merge."}
  addUserKnob {26 divider l "" +STARTLINE}
  addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-04-26\n"}
  addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
