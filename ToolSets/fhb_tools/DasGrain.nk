@@ -1,13 +1,18 @@
+set cut_paste_input [stack 0]
+version 11.3 v3
+push $cut_paste_input
 Group {
  name DasGrain
- help "DasGrain makes re-graining as simple as clicking a few buttons.\n\nFollow the steps in the Help tab and you'll have a perfect regrain in no time!"
- onCreate "import random\n\ntestimonials = \[\n    \"Such an elegant solution, love it!\",\n    \"Your gizmo is beyond expectation\",\n    \"Totally awesome!\",\n    \"DasGrain is officially the best thing ever\",\n    \"It's really working!\",\n    \"Das bringt Tr&auml;nen in meine Augen\",\n    \"DasGrain is the salvation we waited for\",\n    \"It's really working\",\n    \"I save a lot of time, and definitely my nerves :)\",\n    \"It's alright\",\n    \"My new favourite node, thanks!<br>Having said that, ...\"\n    ]\n\nnode = nuke.thisNode()\nnode\['testimonial'].setValue('<br><br><br><i>&laquo;%s&raquo;</i><br>&mdash; anonymous<br><br>' % random.choice(testimonials))\nnode\['box'].setFlag(nuke.NO_ANIMATION)"
- knobChanged "n = nuke.thisNode()\nk = nuke.thisKnob()\n\nif k.name() == 'box':\n    this_frame = nuke.frame()\n    n\['sample_frame'].setValue(this_frame)"
+ help "DasGrain makes regraining as simple as clicking a few buttons.\n\nFollow the steps in the Help tab and you'll have a perfect regrain in no time!"
+ onCreate "import random\n\ntestimonials = \[\n    \"Such an elegant solution, love it!\",\n    \"Your gizmo is beyond expectation\",\n    \"Totally awesome!\",\n    \"DasGrain is officially the best thing ever\",\n    \"It's really working!\",\n    \"Das bringt Tr&auml;nen in meine Augen\",\n    \"DasGrain is the salvation we waited for\",\n    \"I save a lot of time, and definitely my nerves :)\",\n    \"It's alright\",\n    \"My new favourite node, thanks!<br>Having said that, ...\"\n    ]\n\nnode = nuke.thisNode()\nnode\['testimonial'].setValue('<br><br><br><i>&laquo;%s&raquo;</i><br>&mdash; anonymous<br><br>' % random.choice(testimonials))\nnode\['box'].setFlag(nuke.NO_ANIMATION)"
+ knobChanged "n = nuke.thisNode()\nk = nuke.thisKnob()\n\nif k.name() == 'box':\n    this_frame = nuke.frame()\n    n\['sample_frame'].setValue(this_frame)\n\nif k.name() == 'scatter':\n    n\['scatter_tip'].setVisible(k.value() == True)"
  tile_color 0x7f7f7fff
- label "v1.7.2 | 2020-03-22"
- addUserKnob {20 Analyse_tab l Analyse}
- addUserKnob {41 output t "<strong>regrained comp</strong> it is what it sais\n\n<strong>original grain</strong> plate minus degrained plate\n<strong>normalised grain</strong> check if the normalisation worked. It should be as even as possible. This is what you want to output if you want to prerender a grain plate. Later you can plug it into the <i>external grain</i> input of another DasGrain\n<strong>adapted grain</strong> check if the adaptation worked. Output this if you want to further manipulate the grain (who knows what the sup is gonna come up with...). After simply plus it to your comp.\n<strong>grain QC</strong> check if voronoi seams are visible (-> edgeblend), or the scattered grain looks different to the original plate grain (-> maybe bad sample area or wrong luminance degrain amount)" T Output.output}
+ label "v1.7.4 | 2020-05-20"
+ addUserKnob {20 DasGrain_tab l DasGrain}
+ addUserKnob {41 output t "<strong>regrained comp</strong> it is what it sais\n<strong>plate grain</strong> plate minus degrained plate\n<strong>normalised grain</strong> check if the normalisation worked. It should be as even as possible. This is what you want to output if you want to prerender a grain plate. Later you can plug it into the <i>external grain</i> input of another DasGrain\n<strong>adapted grain</strong> check if the adaptation worked. Output this if you want to further manipulate the grain (who knows what the sup is gonna come up with...). After simply plus it to your comp (the comp must be in the <i>internal</i> colorspace, as set in the <i>Analyse</i> tab).\n<strong>grain QC</strong> check if voronoi seams are visible (-> edgeblend), or the scattered grain looks different to the original plate grain (-> maybe bad sample area or wrong luminance degrain amount)" T Output.output}
  addUserKnob {26 spacer01_1 l " " T " "}
+ addUserKnob {20 GrainGroupBegin l "" +STARTLINE n -2}
+ addUserKnob {20 Analyse_tab l Analyse}
  addUserKnob {26 text l <strong>Colorspace}
  addUserKnob {41 in_colorspace l input T OCIOColorSpace1.in_colorspace}
  addUserKnob {22 python_button l "What's this all about?" -STARTLINE T "nuke.message(\"Regraining in other color spaces than the camera native linear space can lead to unexpected behaviour.\\nFor example very saturated colors can result in negative values when converted to ACEScg. If the plate has been shot on an Alexa, changing the color space to ARRI Linear ALEXA Wide Gamut will probably help.\")"}
@@ -26,29 +31,23 @@ Group {
  addUserKnob {1 additional_frames l "additional frames" t "Set additional frames like this:\n\n1001,1020,1053 (single frames)\n1020-1040 (frame ranges)\n1020-1040x4 (frame ranges with step)"}
  addUserKnob {3 sample_count l "sample count" t "The samples are spread across the sample range (which gets calculated automatically) based on the AlexaV3LogC curve. This results in more samples in the dark areas and less samples in the brights.\n\nMore samples lead to a more detailed response curve (while the accuracy is limited by the quality of the degrain)."}
  sample_count 20
- addUserKnob {22 analyse l Analyse t "this is where the magic happens" T "import nuke\n\n\ndef _sample_count(this):\n\n    # returns the sample count\n\n    sample_count = int(this\['sample_count'].value())\n    if sample_count <= 0:\n        raise RuntimeError('Enter a sample count greater than 0')\n\n    else:\n\n        return sample_count\n\n\ndef _generate_frame_list(this):\n\n    # converts the frames submitted by the user into a list\n\n    frame_list = \[]\n\n    number_of_frames = int(this\['number_of_frames'].value())\n    additional_frames = this\['additional_frames'].value()\n\n    if number_of_frames < 1 and additional_frames is '':\n        raise RuntimeError('Either set the number of frames > 0\\nor define additional frames')\n\n    first_frame = max(this.input(1).firstFrame(),\n                      this.input(2).firstFrame())\n    last_frame = min(this.input(1).lastFrame(),\n                     this.input(2).lastFrame())\n\n    if number_of_frames > 0:\n        distance = (last_frame - first_frame) / (number_of_frames)\n        frame = first_frame + distance / 2\n\n        for x in xrange(number_of_frames):\n            int_frame = int(round(frame))\n            if int_frame not in frame_list:\n                frame_list.append(int_frame)\n            frame += distance\n\n    frange = nuke.FrameRanges(additional_frames.split(','))\n    for r in frange:\n        for f in r:\n            if f >= first_frame and f <= last_frame:\n                if f not in frame_list:\n                    frame_list.append(f)\n    frame_list.sort()\n    return frame_list\n\n\ndef _setup_for_multiframe(frame_list):\n\n    # arranges all sample frames next to each other, starting at frame 0\n    # sets the frame number knob of the FrameBlend node\n\n    TimeWarp = nuke.toNode('TimeWarp1')\n    TimeWarp\['lookup'].clearAnimated()\n    TimeWarp\['lookup'].setAnimated()\n    anim_list = \[]\n    for n, frame in enumerate(frame_list):\n        anim_list.append(nuke.AnimationKey(n, frame))\n    anim = TimeWarp\['lookup'].animation(0)\n    anim.addKey(anim_list)\n\n    FrameBlend = nuke.toNode('FrameBlend1')\n    FrameBlend\['endframe'].setValue(len(frame_list)-1)\n\n\ndef _generate_sample_list(\n    sample_count,\n    sample_range,\n    sample_radius\n    ):\n\n    # generate a list of sample values spread equally between the\n    # min and max values of the sample range\n\n    sample_list = \[]\n    for item in range(0, sample_count):\n        sample_list.append(float(item) / sample_count\n                           * (sample_range\[1] - sample_range\[0])\n                           + sample_range\[0] + sample_radius)\n    return sample_list\n\n\ndef _get_sample_range(\n    channel,\n    channel_list,\n    frame_list\n    ):\n\n\n    # samples the minimum and maximum values of the given frame range and\n    # sets the sample range to those values\n\n    CurveTool = nuke.toNode('CurveTool_Range')\n    min_knob = CurveTool\['minlumapixvalue']\n    max_knob = CurveTool\['maxlumapixvalue']\n\n    if channel == 'red':\n        min_knob.clearAnimated()\n        max_knob.clearAnimated()\n\n        min_knob.setAnimated()\n        max_knob.setAnimated()\n\n        nuke.execute(CurveTool, nuke.FrameRanges(frame_list))\n\n    min_list = \[]\n    max_list = \[]\n\n    index = channel_list.index(channel)\n    for key in min_knob.animation(index).keys():\n        min_list.append(key.y)\n\n    for key in max_knob.animation(index).keys():\n        max_list.append(key.y)\n\n    min_value = min(min_list)\n    max_value = max(max_list)\n\n    if channel == 'blue':\n        min_knob.clearAnimated()\n        max_knob.clearAnimated()\n        CurveTool\['minlumapixdata'].clearAnimated()\n        CurveTool\['maxlumapixdata'].clearAnimated()\n\n    return \[min_value, max_value]\n\n\ndef _log2lin(value):\n\n    # converts values from AlexaV3LogC to linear\n\n    if value > 5.367655 * 0.010591 + 0.092809:\n        new_value = (10.0 ** ((value - 0.385537) / 0.247190) - 0.052272) / 5.555556\n    else:\n        new_value = (value - 0.092809) / 5.367655\n    return new_value\n\n\ndef _sample_it(\n    Keyer,\n    CurveTool,\n    frame_list,\n    channel_list,\n    channel,\n    sample,\n    sample_radius,\n    ):\n\n    # analyse the grain level per channel and sample value in the sample range\n\n    Keyer\['temp_expr0'].setValue(str(sample - sample_radius))\n    Keyer\['temp_expr1'].setValue(str(sample + sample_radius))\n\n    intensity_knob = CurveTool\['intensitydata']\n    intensity_knob.clearAnimated()\n    intensity_knob.setAnimated()\n\n    nuke.execute(CurveTool, nuke.frame(), nuke.frame())\n    sample_values = intensity_knob.value()\n    intensity_knob.clearAnimated()\n\n    if sample_values\[3] > 0:\n        value = sample_values\[0] / sample_values\[3]\n\n        if value > 0:\n            return value\n        else:\n\n            return None\n    else:\n\n        return None\n\n\ndef check_inputs(this):\n    if this.input(1) is None:\n        raise RuntimeError('no plate connected')\n    if this.input(2) is None:\n        raise RuntimeError('no degrained plate connected')\n\n    def format_to_tuple(g):\n        \"\"\"returns (1024, 786, 2.0)\n        \"\"\"\n        return (g.format().width(), g.format().height(), g.format().pixelAspect())\n\n    format_set = set(\[\n        format_to_tuple(this.input(1)),\n        format_to_tuple(this.input(2)),\n        ])\n    if len(format_set) != 1:\n        raise RuntimeError(\"Format missmatch: Make sure the formats of plate and degrained plate match.\")\n\ndef start():\n\n    # let's do this!\n\n    this = nuke.thisNode()\n\n    check_inputs(this)\n\n    with this:\n        frame_list = _generate_frame_list(this)\n        _setup_for_multiframe(frame_list)\n        sample_count = _sample_count(this)\n\n        blank = 'bWFzdGVyIHt9CiAgICAgICAgcmVkIHtjdXJ2ZX0KICAgICAgICBncmVlbiB7Y3VydmV9CiAgICAgICAgYmx1ZSB7Y3VydmV9CiAgICAgICAgYWxwaGEge30='.decode(\"base64\")\n\n        lut = nuke.toNode('ColorLookup')\['lut']\n        lut.fromScript(blank)\n\n        channel_list = \['red', 'green', 'blue']\n\n        Keyer = nuke.toNode('Expression2')\n        Copy = nuke.toNode('Copy2')\n\n        CurveTool = nuke.toNode('CurveTool')\n\n        task = nuke.ProgressTask('Analysing...')\n        step = 100.0 / 3 / sample_count\n        progress = step\n\n        TimeWarp = nuke.toNode('TimeWarp1')\n        FrameBlend = nuke.toNode('FrameBlend1')\n\n        TimeWarp\['disable'].setValue(False)\n        FrameBlend\['disable'].setValue(False)\n\n        for channel in channel_list:\n            Copy\['from0'].setValue('rgba.\{\}'.format(channel))\n\n            sample_range = _get_sample_range(channel, channel_list, frame_list)\n            sample_radius = (sample_range\[1] - sample_range\[0]) / sample_count / 2\n            sample_list = _generate_sample_list(sample_count, sample_range, sample_radius)\n\n            for sample in sample_list:\n                if task.isCancelled():\n                    return\n\n                task.setProgress(int(progress))\n                task.setMessage('\{\} channel at \{\}'.format(channel, round(_log2lin(sample), 2)))\n\n                value = _sample_it(\n                    Keyer,\n                    CurveTool,\n                    frame_list,\n                    channel_list,\n                    channel,\n                    sample,\n                    sample_radius,\n                    )\n\n                if value is not None:\n                    lut.setValueAt(value, _log2lin(sample),\n                            channel_list.index(channel) + 1)\n\n                progress += step\n\n        TimeWarp\['lookup'].clearAnimated()\n        TimeWarp\['disable'].setValue(True) #hopefully prevents slowing down the comp\n        FrameBlend\['disable'].setValue(True) #hopefully prevents slowing down the comp\n\n        del task\n\n\nstart()\n" +STARTLINE}
+ addUserKnob {22 analyse l Analyse t "this is where the magic happens" T "import nuke\n\n\ndef _sample_count(this):\n\n    # returns the sample count\n\n    sample_count = int(this\['sample_count'].value())\n    if sample_count <= 0:\n        raise RuntimeError('Enter a sample count greater than 0')\n\n    else:\n\n        return sample_count\n\n\ndef _generate_frame_list(this):\n\n    # converts the frames submitted by the user into a list\n\n    frame_list = \[]\n\n    number_of_frames = int(this\['number_of_frames'].value())\n    additional_frames = this\['additional_frames'].value()\n\n    if number_of_frames < 1 and additional_frames is '':\n        raise RuntimeError('Either set the number of frames > 0\\nor define additional frames')\n\n    first_frame = max(this.input(1).firstFrame(),\n                      this.input(2).firstFrame())\n    last_frame = min(this.input(1).lastFrame(),\n                     this.input(2).lastFrame())\n\n    if number_of_frames > 0:\n        distance = (last_frame - first_frame) / (number_of_frames)\n        frame = first_frame + distance / 2\n\n        for x in xrange(number_of_frames):\n            int_frame = int(round(frame))\n            if int_frame not in frame_list:\n                frame_list.append(int_frame)\n            frame += distance\n\n    frange = nuke.FrameRanges(additional_frames.split(','))\n    for r in frange:\n        for f in r:\n            if f >= first_frame and f <= last_frame:\n                if f not in frame_list:\n                    frame_list.append(f)\n    frame_list.sort()\n    return frame_list\n\n\ndef _setup_for_multiframe(frame_list):\n\n    # arranges all sample frames next to each other, starting at frame 0\n    # sets the frame number knob of the FrameBlend node\n\n    TimeWarp = nuke.toNode('TimeWarp1')\n    TimeWarp\['lookup'].clearAnimated()\n    TimeWarp\['lookup'].setAnimated()\n    anim_list = \[]\n    for n, frame in enumerate(frame_list):\n        anim_list.append(nuke.AnimationKey(n, frame))\n    anim = TimeWarp\['lookup'].animation(0)\n    anim.addKey(anim_list)\n\n    FrameBlend = nuke.toNode('FrameBlend1')\n    FrameBlend\['endframe'].setValue(len(frame_list)-1)\n\n\ndef _generate_sample_list(\n    sample_count,\n    sample_range,\n    sample_radius\n    ):\n\n    # generate a list of sample values spread equally between the\n    # min and max values of the sample range\n\n    sample_list = \[]\n    for item in range(0, sample_count):\n        sample_list.append(float(item) / sample_count\n                           * (sample_range\[1] - sample_range\[0])\n                           + sample_range\[0] + sample_radius)\n    return sample_list\n\n\ndef _get_sample_range(\n    channel,\n    channel_list,\n    frame_list\n    ):\n\n\n    # samples the minimum and maximum values of the given frame range and\n    # sets the sample range to those values\n\n    CurveTool = nuke.toNode('CurveTool_Range')\n    min_knob = CurveTool\['minlumapixvalue']\n    max_knob = CurveTool\['maxlumapixvalue']\n\n    if channel == 'red':\n        min_knob.clearAnimated()\n        max_knob.clearAnimated()\n\n        min_knob.setAnimated()\n        max_knob.setAnimated()\n\n        nuke.execute(CurveTool, nuke.FrameRanges(frame_list))\n\n    min_list = \[]\n    max_list = \[]\n\n    index = channel_list.index(channel)\n    for key in min_knob.animation(index).keys():\n        min_list.append(key.y)\n\n    for key in max_knob.animation(index).keys():\n        max_list.append(key.y)\n\n    min_value = min(min_list)\n    max_value = max(max_list)\n\n    if channel == 'blue':\n        min_knob.clearAnimated()\n        max_knob.clearAnimated()\n        CurveTool\['minlumapixdata'].clearAnimated()\n        CurveTool\['maxlumapixdata'].clearAnimated()\n\n    return \[min_value, max_value]\n\n\ndef _log2lin(value):\n\n    # converts values from AlexaV3LogC to linear\n\n    if value > 5.367655 * 0.010591 + 0.092809:\n        new_value = (10.0 ** ((value - 0.385537) / 0.247190) - 0.052272) / 5.555556\n    else:\n        new_value = (value - 0.092809) / 5.367655\n    return new_value\n\n\ndef _sample_it(\n    Keyer,\n    CurveTool,\n    frame_list,\n    channel_list,\n    channel,\n    sample,\n    sample_radius,\n    ):\n\n    # analyse the grain level per channel and sample value in the sample range\n\n    Keyer\['temp_expr0'].setValue(str(sample - sample_radius))\n    Keyer\['temp_expr1'].setValue(str(sample + sample_radius))\n\n    intensity_knob = CurveTool\['intensitydata']\n    intensity_knob.clearAnimated()\n    intensity_knob.setAnimated()\n\n    nuke.execute(CurveTool, nuke.frame(), nuke.frame())\n    sample_values = intensity_knob.value()\n    intensity_knob.clearAnimated()\n\n    if sample_values\[3] > 0:\n        value = sample_values\[0] / sample_values\[3]\n\n        if value > 0:\n            return value\n        else:\n\n            return None\n    else:\n\n        return None\n\n\ndef check_inputs(this):\n    if this.input(1) is None:\n        raise RuntimeError('no plate connected')\n    if this.input(2) is None:\n        raise RuntimeError('no degrained plate connected')\n\n    def format_to_tuple(g):\n        \"\"\"returns (1024, 786, 2.0)\n        \"\"\"\n        return (g.format().width(), g.format().height(), g.format().pixelAspect())\n\n    format_set = set(\[\n        format_to_tuple(this.input(1)),\n        format_to_tuple(this.input(2)),\n        ])\n    if len(format_set) != 1:\n        raise RuntimeError(\"Format missmatch: Make sure the formats of plate and degrained plate match.\")\n\ndef start():\n\n    # let's do this!\n\n    this = nuke.thisNode()\n\n    check_inputs(this)\n\n    with this:\n        frame_list = _generate_frame_list(this)\n        _setup_for_multiframe(frame_list)\n        sample_count = _sample_count(this)\n\n        blank = 'bWFzdGVyIHt9CiAgICAgICAgcmVkIHtjdXJ2ZX0KICAgICAgICBncmVlbiB7Y3VydmV9CiAgICAgICAgYmx1ZSB7Y3VydmV9CiAgICAgICAgYWxwaGEge30='.decode(\"base64\")\n\n        lut = nuke.toNode('ColorLookup')\['lut']\n        lut.fromScript(blank)\n\n        channel_list = \['red', 'green', 'blue']\n\n        Keyer = nuke.toNode('Expression2')\n        Copy = nuke.toNode('Copy2')\n\n        CurveTool = nuke.toNode('CurveTool')\n\n        task = nuke.ProgressTask('Analysing...')\n        step = 100.0 / 3 / sample_count\n        progress = step\n\n        TimeWarp = nuke.toNode('TimeWarp1')\n        FrameBlend = nuke.toNode('FrameBlend1')\n\n        TimeWarp\['disable'].setValue(False)\n        FrameBlend\['disable'].setValue(False)\n\n        for channel in channel_list:\n            Copy\['from0'].setValue('rgba.\{\}'.format(channel))\n\n            sample_range = _get_sample_range(channel, channel_list, frame_list)\n            sample_radius = (sample_range\[1] - sample_range\[0]) / sample_count / 2\n            sample_list = _generate_sample_list(sample_count, sample_range, sample_radius)\n\n            for sample in sample_list:\n                if task.isCancelled():\n                    return\n\n                task.setProgress(int(progress))\n                task.setMessage('\{\} channel at \{\}'.format(channel, round(_log2lin(sample), 2)))\n\n                value = _sample_it(\n                    Keyer,\n                    CurveTool,\n                    frame_list,\n                    channel_list,\n                    channel,\n                    sample,\n                    sample_radius,\n                    )\n\n                if value is not None:\n                    lut.setValueAt(value, _log2lin(sample),\n                            channel_list.index(channel) + 1)\n\n                progress += step\n\n        TimeWarp\['lookup'].clearAnimated()\n        TimeWarp\['disable'].setValue(True) #hopefully prevents slowing down the comp\n        FrameBlend\['disable'].setValue(True) #hopefully prevents slowing down the comp\n\n        del task\n        nuke.message('Analysis complete. Double-check the curves in the <i>Adjust</i> tab and correct them if necessary.')\n\n\nstart()\n" +STARTLINE}
  addUserKnob {26 divider03 l " "}
  addUserKnob {41 maskChannelMask l "analysis mask" T ChannelMerge1.A}
  addUserKnob {6 invert_1 l invert -STARTLINE}
  addUserKnob {20 Adjust_tab l Adjust}
- addUserKnob {41 output_1 l output t "<strong>regrained comp</strong> it is what it sais\n\n<strong>original grain</strong> plate minus degrained plate\n<strong>normalised grain</strong> check if the normalisation worked. It should be as even as possible. This is what you want to output if you want to prerender a grain plate. Later you can plug it into the <i>external grain</i> input of another DasGrain\n<strong>adapted grain</strong> check if the adaptation worked. Output this if you want to further manipulate the grain (who knows what the sup is gonna come up with...). After simply plus it to your comp.\n<strong>grain QC</strong> check if voronoi seams are visible (-> edgeblend), or the scattered grain looks different to the original plate grain (-> maybe bad sample area or wrong luminance degrain amount)" T Output.output}
- addUserKnob {26 spacer03_2 l " " T " "}
- addUserKnob {26 divider04 l <strong>Adjust}
- addUserKnob {22 whatsthis l "What am I looking at?" T "nuke.message(\"In the RGB channels are the sampled grain response curves. On the x-axis is the brightness of the image, on the y-axis is the grain intensity.<br><br>The quality of the curves depends entirely on the quality of the degrain. If the curves look wrong, try to improve the degrain first. If they still look wrong and the resulting regrain doesn't work well enough, you can try to improve the curves here.<br><br>You can also extend the curves if the comp has values that don't exist in the plate. Don't touch the master curve though.\\n\\nNote: Slope of curves should always be positive (always going up &#8599;)\")" +STARTLINE}
+ addUserKnob {22 whatsthis l "What am I looking at?" T "nuke.message(\"In the RGB channels are the sampled grain response curves. On the x-axis is the brightness of the image, on the y-axis is the grain intensity. Grain increases with brightness, so <strong>the slope of the curves should always be positive</strong> (they should always go up &#8599;).<br><br>The quality of the curves depends entirely on the quality of the degrain. If the curves look wrong, try to improve the degrain first. If they still look wrong and the resulting regrain doesn't work well enough, you can try to improve the curves here.<br><br>You can also extend the curves if the comp has values that don't exist in the plate. Don't touch the master curve though.\")" +STARTLINE}
  addUserKnob {41 lut l "" +STARTLINE T ColorLookup.lut}
  addUserKnob {20 Replace_tab l Replace}
- addUserKnob {41 output_2 l output t "<strong>regrained comp</strong> it is what it sais\n\n<strong>original grain</strong> plate minus degrained plate\n<strong>normalised grain</strong> check if the normalisation worked. It should be as even as possible. This is what you want to output if you want to prerender a grain plate. Later you can plug it into the <i>external grain</i> input of another DasGrain\n<strong>adapted grain</strong> check if the adaptation worked. Output this if you want to further manipulate the grain (who knows what the sup is gonna come up with...). After simply plus it to your comp.\n<strong>grain QC</strong> check if voronoi seams are visible (-> edgeblend), or the scattered grain looks different to the original plate grain (-> maybe bad sample area or wrong luminance degrain amount)" T Output.output}
- addUserKnob {26 spacer04 l " " T " "}
- addUserKnob {26 divider05 l "<strong>External Grain"}
  addUserKnob {6 external_grain l "use external grain" t "Use external grain from a second DasGrain, with the output set to 'normalised grain', to replace masked area.\nConnect it to the 'external grain' input of this DasGrain (it's a bit hidden on the left side of the node)." +STARTLINE}
- addUserKnob {26 spacer05 l " " T " "}
  addUserKnob {26 divider06 l <strong>Scatter}
- addUserKnob {6 scatter l activate t "Activates the scatter function. It generates a new grain based on the grain in the sample box using a Voronoi noise." +STARTLINE}
- addUserKnob {4 stereo l "stereo behaviour" t "randomize offset per view: same voronoy pattern for all views, but different offset\n\nrandomize pattern per view: different voronoy pattern for every view" M {none "randomize offset per view" "randomize pattern per view" ""}}
- addUserKnob {15 box l "sample box" t "Define an area that is used as a source for the scatter function. The grain in this area should be as even as possible, without any visible plate detail."}
+ addUserKnob {6 scatter l activate t "Activates the scatter function. It generates a new grain based on the plate grain in the sample box using a Voronoi noise." +STARTLINE}
+ addUserKnob {26 scatter_tip l "" -STARTLINE +HIDDEN T "<span style=\"color:red\">Make sure you're sampling an area without any plate detail.</a>"}
+ addUserKnob {15 box l "sample box" t "Define an area that is used as a source for the scatter function. The plate grain in this area should be as even as possible, without any visible detail."}
  box {100 100 500 300}
  addUserKnob {3 sample_frame l "sample frame" t "The frame at which the grain is being sampled. Is set automatically once the sample box is changed." +DISABLED}
  sample_frame 1001
+ addUserKnob {4 stereo l "stereo behaviour" t "randomize offset per view: same voronoy pattern for all views, but different offset\n\nrandomize pattern per view: different voronoy pattern for every view" M {none "randomize offset per view" "randomize pattern per view" ""}}
  addUserKnob {26 spacer06 l "" +STARTLINE T " "}
  addUserKnob {6 overlay l "overlay cell pattern" t "Overlay the cell pattern of the voronoy noise. Useful to check where the seams are and if distortion or blending is necessary." +STARTLINE}
  addUserKnob {7 cell_size l "cell size" t "Cell size of the scatter. Shoudn't be too small, as lower grain frequencies might break.\nCan't be too big either, to prevent it from breaking the border of the samplebox (will error if it does)." R 5 100}
@@ -67,26 +66,26 @@ Group {
  addUserKnob {26 divider07 l "" +STARTLINE}
  addUserKnob {41 maskChannelMask_1 l "replace mask" -STARTLINE T Merge9.maskChannelMask}
  addUserKnob {41 invert_mask_1 l invert -STARTLINE T Merge9.invert_mask}
+ addUserKnob {20 GrainGroupEnd l "" +STARTLINE n -3}
  addUserKnob {20 Help_tab l Help}
  addUserKnob {26 basic_setup l "" +STARTLINE T "<font size=\"5\">Basic setup</font>"}
  addUserKnob {26 ""}
  addUserKnob {26 explanation l "" +STARTLINE T "<strong>Bold</strong> steps are always necessary"}
- addUserKnob {26 steps l "" +STARTLINE T "<br><strong>1. This should be the only regrain node in your comp.<br>2. Connect <i>plate</i>, <i>degrained plate</i> and <i>comp</i>.<br>&nbsp;&nbsp;&nbsp;&nbsp;The comp should be done on the degrained plate!</strong><br>3. Set the <i>luminance degrain amount</i>.<br><strong>4. Press the <i>Analyse</i> button.</strong><br>5. Correct the <i>response curves</i> in the Adjust tab.<br>6. Move the <i>sample box</i> to an area without any plate detail and activate <i>scatter</i>.<br>7. If necessary, activate <i>edge blend</i> and/or <i>distortion</i> to conceal seams."}
+ addUserKnob {26 steps l "" +STARTLINE T "<br><strong>1. This should be the only regrain node in your comp.<br>2. Connect <i>plate</i>, <i>degrained plate</i> and <i>comp</i>.<br>&nbsp;&nbsp;&nbsp;&nbsp;The comp should be done on the degrained plate!</strong><br>3. Set the <i>luminance degrain amount</i>.<br><strong>4. Press the <i>Analyse</i> button.</strong><br>5. Correct the response curves in the <i>Adjust</i> tab.<br>6. Move the <i>sample box</i> to an area without any plate detail and activate <i>scatter</i>.<br>7. If necessary, activate <i>edge blend</i> and/or <i>distortion</i> to conceal seams."}
  addUserKnob {26 in_depth l "" +STARTLINE T "<br>For an in depth explanation of the steps, read the tooltips and check out this video:<br><a href=\"https://vimeo.com/284820390/\"><span style=\"color:#C8C8C8;\">https://vimeo.com/284820390</a>"}
  addUserKnob {26 pushthebutton l "" +STARTLINE T "<br><br>If the result is not as expected and you don't know why, push this button:"}
  addUserKnob {22 troubleshoot l Troubleshoot t HEEEEEEELP T "messages = \[]\n\nthis = nuke.thisNode()\n\n#########################\n\nif this.input(0) is None or this.input(1) is None or this.input(2) is None:\n    messages.append(\"<font color='red'><strong>ERROR</strong></font> Plate, degrained plate and comp need to be connected to the appropriate inputs.\")\n\n#########################\n\nelse:\n\n    def format_to_tuple(g):\n        \"\"\"returns (1024, 786, 2.0)\n        \"\"\"\n        return (g.format().width(), g.format().height(), g.format().pixelAspect())\n\n    format_set = set(\[\n        format_to_tuple(this.input(0)),\n        format_to_tuple(this.input(1)),\n        format_to_tuple(this.input(2)),\n        ])\n    if len(format_set) != 1:\n        messages.append(\"<font color='orange'><strong>WARNING</strong></font> Format missmatch: Make sure formats of plate, degrained plate and comp match.\")\n\n    if (this.input(1).firstFrame() != this.input(2).firstFrame()) or (this.input(1).lastFrame() != this.input(2).lastFrame()):\n        messages.append(\"<font color='orange'><strong>WARNING</strong></font> The frame ranges of plate and degrained plate don't match. Double check that they belong together.\")\n\n#########################\n\nmessages.append(\"Double check that plate and degrained plate haven't been modified in any way (paint, despill, etc).\")\n\n#########################\n\nif this\['luminance'].getValue() == 1:\n    messages.append(\"Are you working on a completely degrained plate? If not, you might have to set the luminance degrain amount.\")\n\n#########################\n\nblank = 'bWFzdGVyIHt9CnJlZCB7fQpncmVlbiB7fQpibHVlIHt9CmFscGhhIHt9'.decode(\"base64\")\n\nwith this:\n    ColorLookup = nuke.toNode('ColorLookup')     \n    if ColorLookup\['lut'].toScript() == blank:\n        messages.append(\"<font color='red'><strong>ERROR</strong></font> You haven't pressed the Analyse button yet!\")\n\n#########################\n\nclass BadThings(Exception): pass\n\ndef thingy():\n    with this:\n        ColorLookup = nuke.toNode('ColorLookup')\n        list = this\['lut'].toScript().replace('\}','').split('\\n')\n        for item in list\[1:-1]:\n            sample_value = 0\n            for value in item.split(' '):\n                try:\n                    value == float(value)\n                    if value < sample_value:\n                        raise BadThings(\"<font color='orange'><strong>WARNING</strong></font> Check and fix the response curves. Their slopes should always be positive (the curves should always go up &#8599;).\")\n                        \n                    else:\n                        sample_value = value\n                except ValueError:\n                    # Ignore non-numeric things like x-values of \"x5.46\" and channel names like \"red\{\" etc\n                    pass\ntry:\n    thingy()\nexcept BadThings as e:\n    messages.append(str(e))\n    \n#########################\n\nif this\['scatter'].value() == True:\n    if this\['box'].getValue() == \[100.0, 100.0, 500.0, 300.0]:\n        messages.append(\"<font color='orange'><strong>WARNING</strong></font> Scatter has been activated, but the sample box is still in its default position. Are you sure that's a good area to sample?\")\n\n#########################\n\nmessages.append(\"Did you copy/paste DasGrain from another script? Make sure to reanalyse and to reset the sample area if you are using scatter.\")\n\n#########################\n\nif len(messages) > 0:\n    nuke.message(\"<font size=\\\"5\\\">Things worth checking</font><br><br>\"\n                               \"%s<br><br><br>If any of this doesn't make sense to you, it might be worth checking out the video on vimeo.\" % (\n                                  \"<hr>\".join(\"%s: %s\" % (i+1, m) for i, m in enumerate(messages))))\n" +STARTLINE}
  addUserKnob {26 dont_despair l "" +STARTLINE T "<br>If it still doesn't work and you're about to flip the table, send me a <a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">mail</a>.<br>I'm happy to help! :)"}
  addUserKnob {20 Info_tab l Info}
- addUserKnob {26 dasname l "" +STARTLINE T "<font size='5'>DasGrain</font> v1.7.2<br>"}
+ addUserKnob {26 dasname l "" +STARTLINE T "<font size='5'>DasGrain</font> v1.7.4<br>"}
+ addUserKnob {26 text_1 l "" +STARTLINE T "DasGrain makes regraining as simple as clicking a few buttons.<br>Follow the steps in the <i>Help</i> tab and you'll have a perfect\nregrain<br>in no time!"}
  addUserKnob {26 ""}
- addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-03-22\n"}
- addUserKnob {26 name_1 l "" +STARTLINE T "\nFabian Holtz"}
+ addUserKnob {26 info l "" +STARTLINE T "Last change: 2020-05-20\n\n"}
+ addUserKnob {26 name_1 l "" +STARTLINE T "Fabian Holtz"}
  addUserKnob {26 mail l "" +STARTLINE T "<a href=\"mailto:holtzf+nuke@gmail.com\"><span style=\"color:#C8C8C8;\">holtzf+nuke@gmail.com</a>"}
- addUserKnob {26 testimonial l "" +STARTLINE T ""}
+ addUserKnob {26 testimonial l "" +STARTLINE T "<br><br><br><i>&laquo;Such an elegant solution, love it!&raquo;</i><br>&mdash; anonymous<br><br>"}
  addUserKnob {26 ""}
- addUserKnob {26 credit l "" +STARTLINE T "<br>VoronoiScatter based on Ivan Busquets' implementation of libNoise's\nVoronoi generator"}
- addUserKnob {26 website l "" +STARTLINE T "<a href=\"http://www.nukepedia.com/blink/image/voronoi/\"><span style=\"color:#C8C8C8;\">http://www.nukepedia.com/blink/image/voronoi/</a>"}
- addUserKnob {26 ""}
+ addUserKnob {26 credit l "" +STARTLINE T "<br>VoronoiScatter based on <a href=\"http://www.nukepedia.com/blink/image/voronoi/\"><span style=\"color:#C8C8C8;\">Ivan Busquets' implementation</a> of<br> libNoise's\nVoronoi generator"}
  addUserKnob {26 thanks l "" +STARTLINE T "<br>Special thanks to Ben Dickson for bearing with my questions and<br>problems and RSP comp for the valuable feedback."}
 }
  BackdropNode {
@@ -203,7 +202,7 @@ Group {
   inputs 0
   name BackdropNode8
   tile_color 0x7f7f7fff
-  label "original grain"
+  label "plate grain"
   note_font_size 30
   xpos 280
   ypos 606
@@ -235,13 +234,13 @@ Group {
   xpos 1204
   ypos 258
  }
-set N76f0a800 [stack 0]
+set Nce45dc00 [stack 0]
  Dot {
   name Dot26
   xpos 1204
   ypos 1074
  }
-set N76f0a400 [stack 0]
+set Nce475c00 [stack 0]
  Dot {
   name Dot38
   xpos 1204
@@ -257,19 +256,19 @@ set N76f0a400 [stack 0]
   xpos 544
   ypos 2079
  }
-set N76f21800 [stack 0]
+set Nce475000 [stack 0]
  Dot {
   name Dot20
   xpos 544
   ypos 2199
  }
-push $N76f21800
+push $Nce475000
  Dot {
   name Dot17
   xpos 434
   ypos 2079
  }
-set N76f21000 [stack 0]
+set Nce474800 [stack 0]
  Dot {
   name Dot13
   xpos 214
@@ -310,20 +309,20 @@ set N76f21000 [stack 0]
   xpos 764
   ypos -390
  }
-set N76f39800 [stack 0]
+set Nce48d000 [stack 0]
  Dot {
   name Dot28
   xpos 764
   ypos -198
  }
-set N76f39400 [stack 0]
+set Nce48cc00 [stack 0]
  Dot {
   name Dot32
   xpos 764
   ypos 234
  }
-set N76f39000 [stack 0]
-push $N76f39400
+set Nce48c800 [stack 0]
+push $Nce48cc00
  Dot {
   name Dot27
   xpos 624
@@ -340,7 +339,7 @@ push $N76f39400
   xpos 624
   ypos -54
  }
-set N76f38400 [stack 0]
+set Nce4adc00 [stack 0]
  Input {
   inputs 0
   name PLATE
@@ -360,7 +359,7 @@ set N76f38400 [stack 0]
   xpos 324
   ypos -198
  }
-set N76f5d800 [stack 0]
+set Nce4ad000 [stack 0]
  Dot {
   name Dot6
   xpos 464
@@ -395,7 +394,7 @@ set N76f5d800 [stack 0]
   xpos 464
   ypos 90
  }
-push $N76f38400
+push $Nce4adc00
  Merge2 {
   inputs 2
   operation plus
@@ -429,8 +428,8 @@ push $N76f38400
   xpos 624
   ypos 306
  }
-set N76f8b400 [stack 0]
-push $N76f39000
+set Nce4d8c00 [stack 0]
+push $Nce48c800
  Merge2 {
   inputs 2
   operation from
@@ -448,7 +447,7 @@ push $N76f39000
   xpos 764
   ypos 522
  }
-set N76f8ac00 [stack 0]
+set Nce4d8400 [stack 0]
  ColorLookup {
   channels rgb
   name ColorLookup
@@ -472,13 +471,13 @@ set N76f8ac00 [stack 0]
   xpos 400
   ypos 1550
  }
-push $N76f8ac00
+push $Nce4d8400
  Dot {
   name Dot30
   xpos 544
   ypos 690
  }
-push $N76f5d800
+push $Nce4ad000
  Merge2 {
   inputs 2
   operation from
@@ -495,7 +494,7 @@ push $N76f5d800
   xpos 324
   ypos 786
  }
-set N5580d400 [stack 0]
+set Nce502c00 [stack 0]
  Dot {
   name Dot33
   xpos 324
@@ -517,7 +516,7 @@ set N5580d400 [stack 0]
   xpos 324
   ypos 1650
  }
-set N5580c800 [stack 0]
+set Nce502000 [stack 0]
  Dot {
   name Dot25
   xpos 104
@@ -563,7 +562,7 @@ set N5580c800 [stack 0]
    xpos 214
    ypos -750
   }
-set N55833800 [stack 0]
+set Nce52b000 [stack 0]
   Dot {
    name Dot16
    xpos 434
@@ -579,13 +578,13 @@ set N55833800 [stack 0]
    xpos 434
    ypos -606
   }
-set N55832c00 [stack 0]
+set Nce52a400 [stack 0]
   Dot {
    name Dot15
    xpos 654
    ypos -606
   }
-set N55832800 [stack 0]
+set Nce52a000 [stack 0]
   Dot {
    name Dot7
    xpos 874
@@ -624,7 +623,7 @@ set N55832800 [stack 0]
    xpos 874
    ypos -366
   }
-push $N55832800
+push $Nce52a000
   BlinkScript {
    ProgramGroup 1
    KernelDescription "2 \"VoroNoise\" iterate pixelWise c117be128a07c11b6d82fd34148d66b3bcac41976ec9c2082affe38e890c2c0f 2 \"src\" Read Point \"dst\" Write Point 6 \"Frequency\" Float 1 AABIQg== \"Seed\" Int 1 AAAAAA== \"aspect ratio\" Float 1 AACAPw== \"width\" Int 1 AAAAAA== \"height\" Int 1 AAAAAA== \"Randomness\" Float 1 AAAAPw== 6 \"frequency\" 1 1 \"seed\" 1 1 \"aspect_ratio\" 1 1 \"width\" 1 1 \"height\" 1 1 \"randomness\" 1 1 0"
@@ -666,19 +665,19 @@ push $N55832800
    xpos 654
    ypos -174
   }
-set N55852400 [stack 0]
+set Nce583c00 [stack 0]
   Dot {
    name Dot12
    xpos 764
    ypos -174
   }
-set N55852000 [stack 0]
+set Nce583800 [stack 0]
   Dot {
    name Dot13
    xpos 764
    ypos 114
   }
-push $N55852000
+push $Nce583800
   Dot {
    name Dot8
    xpos 874
@@ -722,7 +721,7 @@ push $N55852000
    xpos 874
    ypos 834
   }
-push $N55852400
+push $Nce583c00
   NoTimeBlur {
    name NoTimeBlur3
    xpos 620
@@ -745,8 +744,8 @@ push $N55852400
    xpos 654
    ypos 114
   }
-set N558ad800 [stack 0]
-push $N55832c00
+set Nce5ab000 [stack 0]
+push $Nce52a400
   Expression {
    expr0 "(x + .5) / width"
    expr1 "(y + .5) / height"
@@ -775,7 +774,7 @@ push $N55832c00
    xpos 434
    ypos 282
   }
-push $N558ad800
+push $Nce5ab000
   Expression {
    temp_name0 view_index
    temp_expr0 "parent.parent.stereo == 1 ? \[lsearch \[value root.views] \[view]] / 2 : 0"
@@ -836,7 +835,7 @@ push $N558ad800
    xpos 654
    ypos 426
   }
-push $N55833800
+push $Nce52b000
   FrameHold {
    first_frame {{parent.sample_frame}}
    name FrameHold1
@@ -857,7 +856,7 @@ push $N55833800
    xpos 180
    ypos 422
   }
-set N558e1000 [stack 0]
+set Nce5d2800 [stack 0]
   TimeBlur {
    divisions {{"max(Transform1.size == 1 ? 2 : pow2(Transform1.size), 1)"}}
    shutter 1
@@ -867,8 +866,8 @@ set N558e1000 [stack 0]
    ypos 518
    disable {{"parent.edge_blend_size < 1"}}
   }
-set N558e0c00 [stack 0]
-push $N558e1000
+set Nce5d2400 [stack 0]
+push $Nce5d2800
   Dot {
    name Dot1
    xpos -6
@@ -910,7 +909,7 @@ push $N558e1000
    xpos -6
    ypos 738
   }
-push $N558e0c00
+push $Nce5d2400
   Grade {
    inputs 1+1
    white 1.4
@@ -959,8 +958,8 @@ push $N558e0c00
   xpos 104
   ypos 2199
  }
-push $N76f21000
-push $N5580c800
+push $Nce474800
+push $Nce502000
  Multiply {
   inputs 1+1
   channels rgb
@@ -989,14 +988,14 @@ push $N5580c800
   xpos 324
   ypos 2298
  }
-set N5593d000 [stack 0]
-push $N76f0a800
+set Nce63c800 [stack 0]
+push $Nce45dc00
  Dot {
   name Dot40
   xpos 874
   ypos 258
  }
-push $N76f8b400
+push $Nce4d8c00
  Dot {
   name Dot34
   xpos 624
@@ -1031,7 +1030,7 @@ push $N76f8b400
   xpos 984
   ypos -390
  }
-set N55965800 [stack 0]
+set Nce65f000 [stack 0]
  Merge2 {
   inputs 2
   operation from
@@ -1049,7 +1048,7 @@ set N55965800 [stack 0]
   xpos 984
   ypos 2466
  }
-set N55965000 [stack 0]
+set Nce65e800 [stack 0]
  ColorLookup {
   channels rgb
   name ColorLookup1
@@ -1079,7 +1078,7 @@ set N55965000 [stack 0]
   xpos 324
   ypos 2658
  }
-push $N55965000
+push $Nce65e800
  Merge2 {
   inputs 2
   operation plus
@@ -1096,7 +1095,7 @@ push $N55965000
   xpos 984
   ypos 2826
  }
-set N55993800 [stack 0]
+set Nce68f000 [stack 0]
  OCIOColorSpace {
   in_colorspace {{OCIOColorSpace1.out_colorspace}}
   out_colorspace {{OCIOColorSpace1.in_colorspace}}
@@ -1109,13 +1108,13 @@ set N55993800 [stack 0]
   xpos 984
   ypos 2970
  }
-set N55993000 [stack 0]
+set Nce68e800 [stack 0]
  Dot {
   name Dot41
   xpos 1204
   ypos 2970
  }
-set N55992c00 [stack 0]
+set Nce68e400 [stack 0]
  Dot {
   name Dot36
   xpos 1314
@@ -1128,7 +1127,7 @@ set N55992c00 [stack 0]
   xpos 1280
   ypos 3062
  }
-push $N55992c00
+push $Nce68e400
  Merge2 {
   inputs 2
   operation difference
@@ -1152,13 +1151,13 @@ push $N55992c00
   xpos 1204
   ypos 3210
  }
-push $N55965800
+push $Nce65f000
  Dot {
   name Dot45
   xpos 1424
   ypos -390
  }
-push $N55993800
+push $Nce68f000
  Merge2 {
   inputs 2
   operation from
@@ -1174,7 +1173,7 @@ push $N55993800
   xpos 1424
   ypos 3330
  }
-push $N5593d000
+push $Nce63c800
  Dot {
   name Dot14
   xpos 104
@@ -1185,13 +1184,13 @@ push $N5593d000
   xpos 104
   ypos 3210
  }
-push $N76f39800
+push $Nce48d000
  Dot {
   name Dot47
   xpos -556
   ypos -390
  }
-push $N76f5d800
+push $Nce4ad000
  Merge2 {
   inputs 2
   operation from
@@ -1207,7 +1206,7 @@ push $N76f5d800
   xpos -556
   ypos 3330
  }
-push $N55993000
+push $Nce68e800
  Switch {
   inputs 5
   which {{output}}
@@ -1215,28 +1214,28 @@ push $N55993000
   xpos 950
   ypos 3464
   addUserKnob {20 User}
-  addUserKnob {4 output M {"regrained comp" "original grain" "normalised grain" "adapted grain" "grain QC"}}
+  addUserKnob {4 output M {"regrained comp" "plate grain" "normalised grain" "adapted grain" "grain QC" "" ""}}
  }
  Output {
   name Output1
   xpos 950
   ypos 3662
  }
-push $N76f0a400
+push $Nce475c00
  Invert {
   name Invert2
   xpos 180
   ypos 1064
   disable {{!parent.invert_1}}
  }
-push $N5580d400
+push $Nce502c00
  Dot {
   name Dot5
   xpos 104
   ypos 786
  }
-set N559d8800 [stack 0]
-push $N559d8800
+set Nce6da000 [stack 0]
+push $Nce6da000
  Copy {
   inputs 2
   from0 {{{parent.Copy2.from0}}}
@@ -1255,8 +1254,8 @@ push $N559d8800
   xpos 70
   ypos 926
  }
-set N559d8000 [stack 0]
-push $N76f8ac00
+set Nce6fb800 [stack 0]
+push $Nce4d8400
  Colorspace {
   colorspace_out AlexaV3LogC
   name Colorspace5
@@ -1274,14 +1273,14 @@ push $N76f8ac00
   xpos -116
   ypos 522
  }
-set N55a05400 [stack 0]
+set Nce6fac00 [stack 0]
  Dot {
   name Dot48
   xpos -116
   ypos 786
  }
-set N55a05000 [stack 0]
-push $N55a05000
+set Nce6fa800 [stack 0]
+push $Nce6fa800
  Copy {
   inputs 2
   from0 rgba.blue
@@ -1292,7 +1291,9 @@ push $N55a05000
  }
  Expression {
   temp_name0 min
+  temp_expr0 0.0928089991212
   temp_name1 max
+  temp_expr1 0.0928089991212
   channel0 {none none none rgba.alpha}
   expr0 "r >= min && r <= max"
   channel1 none
@@ -1314,7 +1315,7 @@ push $N55a05000
   xpos -40
   ypos 985
  }
-push $N559d8000
+push $Nce6fb800
  Copy {
   inputs 2
   from0 rgba.alpha
@@ -1339,6 +1340,7 @@ push $N559d8000
   ypos 1142
  }
  TimeWarp {
+  lookup 1
   time ""
   filter nearest
   name TimeWarp1
@@ -1349,6 +1351,7 @@ push $N559d8000
  FrameBlend {
   channels {rgba.red -rgba.green -rgba.blue rgba.alpha}
   startframe 0
+  endframe 0
   userange true
   name FrameBlend1
   xpos 70
@@ -1359,11 +1362,12 @@ push $N559d8000
   avgframes 0
   channels {rgba.red -rgba.green -rgba.blue rgba.alpha}
   ROI {0 0 {width} {height}}
+  intensitydata {0 0 0 0}
   name CurveTool
   xpos 70
   ypos 1280
  }
-push $N55a05400
+push $Nce6fac00
  Dot {
   name Dot16
   xpos -336
@@ -1372,6 +1376,8 @@ push $N55a05400
  CurveTool {
   operation "Max Luma Pixel"
   ROI {0 0 {width} {height}}
+  maxlumapixvalue {0.09280899912 0.09280899912 0.09280899912}
+  minlumapixvalue {0.09280899912 0.09280899912 0.09280899912}
   name CurveTool_Range
   xpos -370
   ypos 686
